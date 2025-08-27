@@ -18,7 +18,23 @@
 
 1. 前往 **管理面板 → 插件管理 → 上传插件** 进行安装。  
 
-2. 插件安装包可在 [Releases](../../releases) 获取，或者下载整个仓库后，将 `oauth-oidc` 文件夹压缩为 zip（注意 **压缩包里必须包含外层 `oauth-oidc` 文件夹**），再上传安装。  
+2. 插件安装包可在 [Releases](../../releases) 获取，或者下载整个仓库后，将 `oauth-oidc` 文件夹压缩为 zip（注意 **压缩包里必须包含外层 `oauth-oidc` 文件夹**），再上传安装。
+目录结构应当类似：  
+.  
+└── auth-oidc  
+    ├── LICENSE  
+    ├── bootstrap.php  
+    ├── composer.json  
+    ├── lang  
+    │   ├── en  
+    │   │   └── general.yml  
+    │   └── zh_CN  
+    │       └── general.yml  
+    ├── package.json  
+    ├── readme.md  
+    └── src  
+        ├──   OIDCExtendSocialite.php  
+        └── OIDCProvider.php  
 
 ⚠️ 如果插件未生效：  
 - 请检查上传的 zip 包结构是否正确（应为 `oauth-oidc/` 文件夹而不是直接散落的文件）。  
