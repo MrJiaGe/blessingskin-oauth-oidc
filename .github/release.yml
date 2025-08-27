@@ -1,0 +1,34 @@
+name: Build and Upload Release Package
+
+on:
+  release:
+    types: [published, edited]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set release tag
+        id: vars
+        run: echo "tag=${GITHUB_REF##*/}" >> $GITHUB_OUTPUT
+
+      - name: Prepare folder structure
+        run: |
+          mkdir oauth-oidc
+          shopt -s dotglob
+          mv !(oauth-oidc) oauth-oidc/
+
+      - name: Create zip package
+        run: |
+          zip -r "OAuth-OIDC_${{ steps.vars.outputs.tag }}.zip" oauth-oidc
+
+      - name: Upload release asset
+        uses: softprops/action-gh-release@v2
+        with:
+          files: "OAuth-OIDC_${{ steps.vars.outputs.tag }}.zip"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
