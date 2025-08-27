@@ -1,0 +1,20 @@
+{
+  "name": "oauth-OIDC",
+  "title": "Blessing\\OAuth\\OIDC::general.title",
+  "version": "1.0.0",
+  "description": "Blessing\\OAuth\\OIDC::general.description",
+  "author": "MrJiaGe",
+  "url": "https://sso.wdtngzs.top/",
+  "namespace": "Blessing\\OAuth\\OIDC",
+  "require": {
+    "blessing-skin-server": "^5|^6",
+    "oauth": "^1.0.0"
+  },
+  "enchants": {
+    "icon": {
+      "fa": "user",
+      "faType": "fas",
+      "bg": "primary"
+    }
+  }
+}
