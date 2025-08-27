@@ -1,8 +1,8 @@
 # BlessingSkin OIDC 插件
 
-这是一个为 [Blessing Skin](https://github.com/bs-community/blessing-skin-server) 提供 **OIDC 登录支持** 的插件。  
+这是一个为 [BlessingSkin](https://github.com/bs-community/blessing-skin-server) 提供 **OIDC 登录支持** 的插件。  
 需Oauth核心已安装且运行  
-目前已在 **Blessing Skin 6.0.2**（截至现在的最新版）测试可用。
+目前已在 **BlessingSkin 6.0.2** 测试可用。
 
 ---
 
@@ -32,9 +32,9 @@
 
 https://your-blessingskin-domain/auth/login/oidc/callback  
 
-2. 获取 Casdoor 提供的 **Client ID**、**Client Secret**、**Issuer URL**。  
+2. 正确配置应用程序并获取 Casdoor 提供的 **Client ID**、**Client Secret**。  
 
-3. 在 BlessingSkin .env文件 → 插件设置中，填入以下信息：  
+3. 在 BlessingSkin .env文件 → 插件设置中，填入以下信息（这是示例，别直接抄，记得改改😅）：  
 
 - OIDC_CLIENT_ID=your-client-id  
 - OIDC_CLIENT_SECRET=your-client-secret  
@@ -55,7 +55,7 @@ https://your-blessingskin-domain/auth/login/oidc/callback
 
 ## 致谢
 
-- [Blessing Skin](https://github.com/bs-community/blessing-skin-server)  
+- [BlessingSkin](https://github.com/bs-community/blessing-skin-server)  
 - [Casdoor](https://github.com/casdoor/casdoor)  
 - OIDC 协议相关社区  
 
@@ -63,4 +63,4 @@ https://your-blessingskin-domain/auth/login/oidc/callback
 
 ## 开源协议
 
-本插件基于 **MIT 协议** 开源，欢迎二次开发与贡献（当然，如果没有bug的话我就不再修改了）。
+本插件基于 **MIT 协议** 开源，欢迎二次开发与贡献（当然，核心功能已经实现了，如果没有bug的话我就不再修改了）。
