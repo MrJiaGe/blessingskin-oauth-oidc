@@ -1,6 +1,6 @@
 # BlessingSkin OIDC 插件
 
-这是一个为 [BlessingSkin](https://github.com/bs-community/blessing-skin-server) 提供 **OIDC 登录支持** 的插件。  
+[blessingskin-oauth-oidc](https://github.com/MrJiaGe/blessingskin-oauth-oidc)是一个为 [BlessingSkin](https://github.com/bs-community/blessing-skin-server) 提供 **OIDC 登录支持** 的插件。  
 需Oauth核心已安装且运行  
 目前已在 **BlessingSkin 6.0.2** 测试可用。
 
