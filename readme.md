@@ -20,7 +20,7 @@
 
 2. 插件安装包可在 [Releases](../../releases) 获取，或者下载整个仓库后，将 `oauth-oidc` 文件夹压缩为 zip（注意 **压缩包里必须包含外层 `oauth-oidc` 文件夹**），再上传安装。
 目录结构应当类似：  
-.  
+zip文件.zip  
 └── auth-oidc  
     ├── LICENSE  
     ├── bootstrap.php  
