@@ -50,7 +50,7 @@ https://your-blessingskin-domain/auth/login/oidc/callback
 
 2. 正确配置应用程序并获取 Casdoor 提供的 **Client ID**、**Client Secret**。  
 
-3. 在 BlessingSkin .env文件 → 插件设置中，填入以下信息（这是示例，别直接抄，记得改改😅）：  
+3. 在 BlessingSkin .env文件中，填入以下信息（这是示例，别直接抄，记得改改😅）：  
 
 - OIDC_CLIENT_ID=your-client-id  
 - OIDC_CLIENT_SECRET=your-client-secret  
