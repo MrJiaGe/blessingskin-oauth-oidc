@@ -26,7 +26,7 @@ return function (Dispatcher $events, Filter $filter) {
     $filter->add('oauth_providers', function (Collection $providers) {
         $providers->put('oidc', [
             'icon' => 'fa-user-circlc',
-            'displayName' => env('OIDC_display_Name','OIDC'),
+            'displayName' => env('OIDC_DISPLAY_NAME','OIDC'),
         ]);
         return $providers;
     });

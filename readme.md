@@ -55,7 +55,7 @@ https://your-blessingskin-domain/auth/login/oidc/callback
 - OIDC_CLIENT_ID=your-client-id  
 - OIDC_CLIENT_SECRET=your-client-secret  
 - OIDC_REDIRECT_URI=https://your-blessingskin-domain/auth/login/oidc/callback  
-- OIDC_display_Name='OIDC'  
+- OIDC_DISPLAY_NAME='OIDC'  
 - OIDC_AUTHORIZE_URL=https://your-oidc-domain/login/oauth/authorize  
 - OIDC_TOKEN_URL=https://your-oidc-domain/api/login/oauth/access_token  
 - OIDC_USERINFO_URL=https://your-oidc-domain/api/userinfo  

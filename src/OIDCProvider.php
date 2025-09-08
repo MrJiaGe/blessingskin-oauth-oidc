@@ -9,6 +9,7 @@ class OIDCProvider extends AbstractProvider
 {
     const IDENTIFIER = 'OIDC';
     protected $scopes = ['openid', 'profile', 'email'];
+    protected $scopeSeparator = ' ';
 
     protected function getAuthUrl($state)
     {
