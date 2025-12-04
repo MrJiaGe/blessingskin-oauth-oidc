@@ -71,6 +71,10 @@ https://your-blessingskin-domain/auth/login/oidc/callback
 
 ---
 
+## 已知问题（小）
+目前，我由于个人原因，无额外精力对以下内容进行修复、适配，非常抱歉，并且由于不能完全依赖AI，我短期内无更新计划，如有需要，推荐fork后自行修改
+- 登录与blessingskin系统内的email绑定，没有实现openid绑定，仅可实现快速登录。例如：SSO提供的email改变时会被判定为新账号，同理，如果再blessingskin修改邮箱，SSO账号依旧会被尝试新注册账号。
+
 ## 致谢
 
 - [BlessingSkin](https://github.com/bs-community/blessing-skin-server)  
