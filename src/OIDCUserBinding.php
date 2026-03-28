@@ -4,6 +4,7 @@ namespace Blessing\OAuth\OIDC;
 
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Log;
 
 /**
  * OIDC Subject to User Binding Model
@@ -48,15 +49,29 @@ class OIDCUserBinding extends Model
      */
     public static function findBySub(string $sub, ?string $issuer = null): ?self
     {
+        $issuer = $issuer ?: null;
+
         $query = self::where('oidc_sub', $sub);
 
         if ($issuer !== null) {
             $query->where('oidc_issuer', $issuer);
         } else {
-            $query->whereNull('oidc_issuer');
+            $query->where(function ($q) {
+                $q->whereNull('oidc_issuer')
+                    ->orWhere('oidc_issuer', '');
+            });
         }
 
-        return $query->first();
+        $binding = $query->first();
+
+        Log::debug('OIDC Binding: 查询绑定', [
+            'sub' => $sub,
+            'issuer' => $issuer,
+            'found' => !is_null($binding),
+            'binding_id' => $binding ? $binding->id : null,
+        ]);
+
+        return $binding;
     }
 
     /**
@@ -69,12 +84,23 @@ class OIDCUserBinding extends Model
      */
     public static function bindUser(int $uid, string $sub, ?string $issuer = null): self
     {
+        $issuer = $issuer ?: null;
+
+        Log::info('OIDC Binding: 开始创建/更新绑定', [
+            'uid' => $uid,
+            'sub' => $sub,
+            'issuer' => $issuer,
+        ]);
+
         $query = self::where('oidc_sub', $sub);
 
         if ($issuer !== null) {
             $query->where('oidc_issuer', $issuer);
         } else {
-            $query->whereNull('oidc_issuer');
+            $query->where(function ($q) {
+                $q->whereNull('oidc_issuer')
+                    ->orWhere('oidc_issuer', '');
+            });
         }
 
         $binding = $query->first();
@@ -84,10 +110,44 @@ class OIDCUserBinding extends Model
             $binding->uid = $uid;
             $binding->oidc_sub = $sub;
             $binding->oidc_issuer = $issuer;
-            $binding->save();
+
+            if (!$binding->save()) {
+                Log::error('OIDC Binding: 创建绑定失败', [
+                    'uid' => $uid,
+                    'sub' => $sub,
+                    'issuer' => $issuer,
+                ]);
+                throw new \RuntimeException('Failed to create OIDC binding');
+            }
+
+            Log::info('OIDC Binding: 绑定创建成功', [
+                'id' => $binding->id,
+                'uid' => $uid,
+                'sub' => $sub,
+            ]);
         } elseif ($binding->uid !== $uid) {
+            $oldUid = $binding->uid;
             $binding->uid = $uid;
-            $binding->save();
+
+            if (!$binding->save()) {
+                Log::error('OIDC Binding: 更新绑定失败', [
+                    'id' => $binding->id,
+                    'old_uid' => $oldUid,
+                    'new_uid' => $uid,
+                ]);
+                throw new \RuntimeException('Failed to update OIDC binding');
+            }
+
+            Log::info('OIDC Binding: 绑定更新成功', [
+                'id' => $binding->id,
+                'old_uid' => $oldUid,
+                'new_uid' => $uid,
+            ]);
+        } else {
+            Log::debug('OIDC Binding: 绑定已存在且未变化', [
+                'id' => $binding->id,
+                'uid' => $uid,
+            ]);
         }
 
         return $binding;

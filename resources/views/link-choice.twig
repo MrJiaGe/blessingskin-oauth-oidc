@@ -1,0 +1,58 @@
+{% extends 'auth.base' %}
+
+{% block title %}{{ trans('Blessing\\OAuth\\OIDC::general.link_title') }}{% endblock %}
+
+{% block content %}
+<p class="mb-4">
+    {{ trans('Blessing\\OAuth\\OIDC::general.link_description', {'email': email, 'provider': oidc_name}) }}
+</p>
+
+{% if nickname is not empty %}
+<p class="text-muted mb-4">
+    <small>{{ trans('Blessing\\OAuth\\OIDC::general.nickname_from_provider', {'provider': oidc_name}) }}: {{ nickname }}</small>
+</p>
+{% endif %}
+
+<div class="row">
+    <div class="col-12 mb-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <h5 class="card-title">
+                    <i class="fa fa-link mr-2"></i>
+                    {{ trans('Blessing\\OAuth\\OIDC::general.link_existing') }}
+                </h5>
+                <p class="card-text text-muted">
+                    {{ trans('Blessing\\OAuth\\OIDC::general.link_existing_desc') }}
+                </p>
+                <a href="{{ login_url }}" class="btn btn-primary">
+                    {{ trans('Blessing\\OAuth\\OIDC::general.login_to_link') }}
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 mb-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <h5 class="card-title">
+                    <i class="fa fa-user-plus mr-2"></i>
+                    {{ trans('Blessing\\OAuth\\OIDC::general.create_new') }}
+                </h5>
+                <p class="card-text text-muted">
+                    {{ trans('Blessing\\OAuth\\OIDC::general.create_new_desc') }}
+                </p>
+                <form action="{{ route('oidc.link.create') }}" method="POST">
+                    {{ csrf_field()|raw }}
+                    <button type="submit" class="btn btn-success">
+                        {{ trans('Blessing\\OAuth\\OIDC::general.create_account') }}
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="alert alert-info mt-4">
+    <i class="fa fa-info-circle mr-2"></i>
+    {{ trans('Blessing\\OAuth\\OIDC::general.link_info') }}
+</div>
+{% endblock %}

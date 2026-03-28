@@ -14,6 +14,7 @@
 - **每次登录自动同步用户名和邮箱**：从 OIDC Provider 获取最新用户信息并同步到本地
 - **基于 OpenID (sub) 绑定**：使用 OIDC subject 标识符绑定用户，避免邮箱变更导致的账户问题
 - **支持多 Provider**：通过 `OIDC_ISSUER` 配置支持多个 OIDC Provider
+- **账号关联选择**：首次登录时可选择关联现有账户或创建新账户（可配置）
 
 ---
 
@@ -37,10 +38,15 @@ zip文件.zip
     │       └── general.yml  
     ├── package.json  
     ├── readme.md  
+    ├── resources  
+    │   └── views  
+    │       └── link-choice.twig  
     └── src  
         ├── OIDCAuthController.php  
         ├── OIDCExtendSocialite.php  
+        ├── OIDCLinkController.php  
         ├── OIDCProvider.php  
+        ├── OIDCSession.php  
         └── OIDCUserBinding.php
 ```
 
@@ -67,9 +73,9 @@ https://your-blessingskin-domain/oidc/callback
 - OIDC_AUTHORIZE_URL=https://your-oidc-domain/login/oauth/authorize  
 - OIDC_TOKEN_URL=https://your-oidc-domain/api/login/oauth/access_token  
 - OIDC_USERINFO_URL=https://your-oidc-domain/api/userinfo
+- OIDC_LINK_ENABLED=true  # 可选，启用账号关联选择功能（默认 true）
 
-
-以Casdoor为例，最后三个参数可访问Provider域名+后缀.well-known/openid-configuration获取  
+以Casdoor为例，最后三个参数可访问Provider域名+后缀.well-known/openid-configuration获取
 
 如果遇到问题可以将.well-known/openid-configuration地址附带.env.example文件发给大模型咨询  
 
@@ -115,26 +121,27 @@ OIDC 登录
     是            否
      │             │
      ▼             ▼
-  通过 uid    通过 email 查找用户
+  通过 uid    检查 OIDC_LINK_ENABLED
   获取用户         │
      │        ┌────┴────┐
-     │        │ 找到?   │
+     │        │ 启用?   │
      │        └────┬────┘
      │             │
      │       ┌─────┴─────┐
      │       │           │
      │      是          否
      │       │           │
-     │       │           ▼
-     │       │      创建新用户
+     │       ▼           ▼
+     │  显示选择页面  通过 email 查找/创建用户
      │       │           │
-     │       └─────┬─────┘
-     │             │
-     └──────┬──────┘
-            │
-            ▼
-    创建绑定记录
-    (sub → uid)
+     │  ┌────┴────┐      │
+     │  │         │      │
+     │ 创建新  关联现有   │
+     │ 账户     账户      │
+     │  │         │      │
+     │  │    登录后绑定   │
+     │  │         │      │
+     └──┴─────────┴──────┘
             │
             ▼
     同步 nickname + email
@@ -142,6 +149,17 @@ OIDC 登录
             ▼
         登录用户
 ```
+
+### 账号关联选择
+
+当 `OIDC_LINK_ENABLED=true`（默认）时，首次使用 OIDC 登录的用户会看到选择页面：
+
+- **关联现有账户**：如果您已有 BlessingSkin 账户，可以登录后进行关联
+- **创建新账户**：创建一个全新的账户，并使用 OIDC 登录
+
+创建新账户后，用户的密码为空，建议在个人设置中设置密码以便使用邮箱登录。
+
+若不需要此功能，可设置 `OIDC_LINK_ENABLED=false`，系统将自动通过邮箱查找或创建用户。
 
 ### 数据库表
 

@@ -10,7 +10,11 @@ use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Laravel\Socialite\Facades\Socialite;
+use Laravel\Socialite\Two\InvalidStateException;
 use Vectorface\Whip\Whip;
+use GuzzleHttp\Exception\ClientException;
+use GuzzleHttp\Exception\ServerException;
+use GuzzleHttp\Exception\ConnectException;
 
 class OIDCAuthController extends Controller
 {
@@ -27,6 +31,7 @@ class OIDCAuthController extends Controller
             'url' => request()->fullUrl(),
             'has_code' => request()->has('code'),
             'has_state' => request()->has('state'),
+            'session_id' => session()->getId(),
         ]);
 
         try {
@@ -36,25 +41,62 @@ class OIDCAuthController extends Controller
                 'email' => $remoteUser->email ?? null,
                 'nickname' => $remoteUser->nickname ?? null,
             ]);
+        } catch (InvalidStateException $e) {
+            Log::error('OIDC Callback: State 验证失败', [
+                'error' => $e->getMessage(),
+                'session_state' => session()->get('state'),
+                'request_state' => request()->get('state'),
+            ]);
+            abort(500, 'OIDC state validation failed. Please try again.');
+        } catch (ClientException $e) {
+            $response = $e->getResponse();
+            $body = $response ? (string) $response->getBody() : '';
+            Log::error('OIDC Callback: HTTP 客户端错误', [
+                'status' => $response ? $response->getStatusCode() : null,
+                'body' => $body,
+                'message' => $e->getMessage(),
+            ]);
+            abort(500, 'OIDC authentication failed: ' . $e->getMessage());
+        } catch (ServerException $e) {
+            $response = $e->getResponse();
+            $body = $response ? (string) $response->getBody() : '';
+            Log::error('OIDC Callback: OIDC 服务器错误', [
+                'status' => $response ? $response->getStatusCode() : null,
+                'body' => $body,
+                'message' => $e->getMessage(),
+            ]);
+            abort(500, 'OIDC server error: ' . $e->getMessage());
+        } catch (ConnectException $e) {
+            Log::error('OIDC Callback: 连接 OIDC 服务器失败', [
+                'message' => $e->getMessage(),
+            ]);
+            abort(500, 'Failed to connect to OIDC server: ' . $e->getMessage());
         } catch (\Exception $e) {
             Log::error('OIDC Callback: 认证失败', [
                 'error' => $e->getMessage(),
+                'class' => get_class($e),
                 'trace' => $e->getTraceAsString(),
             ]);
-            abort(500, 'OIDC authentication failed: ' . $e->getMessage());
+            abort(500, 'OIDC authentication failed: ' . ($e->getMessage() ?: 'Unknown error'));
         }
 
         $sub = $remoteUser->id;
         $email = $remoteUser->email;
-        $issuer = env('OIDC_ISSUER');
+        $issuer = env('OIDC_ISSUER') ?: null;
 
         if (empty($sub)) {
-            Log::error('OIDC Callback: 未获取到 sub claim');
+            Log::error('OIDC Callback: 未获取到 sub claim', [
+                'user_data' => $remoteUser->user ?? [],
+            ]);
             abort(500, 'OIDC Provider did not provide subject (sub) claim.');
         }
 
         $binding = OIDCUserBinding::findBySub($sub, $issuer);
-        Log::info('OIDC Callback: 查找绑定结果', ['binding_found' => !is_null($binding)]);
+        Log::info('OIDC Callback: 查找绑定结果', [
+            'binding_found' => !is_null($binding),
+            'sub' => $sub,
+            'issuer' => $issuer,
+        ]);
 
         $user = null;
         $isNewUser = false;
@@ -65,13 +107,38 @@ class OIDCAuthController extends Controller
                 Log::warning('OIDC Callback: 绑定存在但用户不存在，删除绑定', ['uid' => $binding->uid]);
                 $binding->delete();
                 $binding = null;
+            } else {
+                OIDCSession::clear();
             }
         }
 
         if (!$user) {
             if (empty($email)) {
-                Log::error('OIDC Callback: 未获取到邮箱且无绑定记录');
+                Log::error('OIDC Callback: 未获取到邮箱且无绑定记录', [
+                    'sub' => $sub,
+                    'user_data' => $remoteUser->user ?? [],
+                ]);
                 abort(500, 'OIDC Provider did not provide email. Cannot create new user without binding.');
+            }
+
+            $linkEnabled = env('OIDC_LINK_ENABLED', true);
+
+            if ($linkEnabled) {
+                OIDCSession::storePending([
+                    'sub' => $sub,
+                    'email' => $email,
+                    'nickname' => $remoteUser->nickname ?? $remoteUser->name ?? '',
+                    'issuer' => $issuer,
+                    'avatar' => $remoteUser->avatar ?? null,
+                ]);
+
+                Log::info('OIDC Callback: 重定向到账号关联选择页面', [
+                    'email' => $email,
+                    'link_enabled' => $linkEnabled,
+                    'session_id' => session()->getId(),
+                ]);
+
+                return redirect()->route('oidc.link.choice');
             }
 
             $user = User::where('email', $email)->first();

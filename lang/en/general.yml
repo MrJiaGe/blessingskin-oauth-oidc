@@ -1,2 +1,23 @@
 title: Log In with OIDC
 description: Log in skin server with OIDC.
+
+# Account Linking
+link_title: Link Account
+link_description: 'Email :email is not bound to any account. Please choose an option:'
+nickname_from_provider: 'Nickname from :provider'
+link_existing: Link Existing Account
+link_existing_desc: If you already have a BlessingSkin account, you can log in and link it
+login_to_link: Log In to Link
+create_new: Create New Account
+create_new_desc: Create a new BlessingSkin account and use OIDC to log in
+create_account: Create New Account
+link_info: After choosing "Link Existing Account", you need to log in to your existing account first, then the linking will be completed automatically. After creating a new account, you can set a password in your profile settings.
+
+# Messages
+account_created: Account created successfully
+password_hint: Your account has been created. We recommend setting a password in your profile settings to enable email login.
+link_success: OIDC account linked successfully
+session_expired: Session expired, please log in again
+already_linked: This account is already linked to another OIDC account
+oidc_already_bound: This OIDC account is already bound to another user
+please_login_first: Please log in first
