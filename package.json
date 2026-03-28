@@ -1,7 +1,7 @@
 {
   "name": "oauth-OIDC",
   "title": "Blessing\\OAuth\\OIDC::general.title",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "description": "Blessing\\OAuth\\OIDC::general.description",
   "author": "MrJiaGe",
   "url": "https://sso.wdtngzs.top/",

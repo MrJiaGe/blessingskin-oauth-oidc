@@ -10,7 +10,10 @@
 
 - 支持 OIDC 协议的第三方身份认证  
 - 可用于 [Casdoor](https://casdoor.org/)、Keycloak 等身份提供服务  
-- 无需修改 BlessingSkin 源码，安装插件即可使用  
+- 无需修改 BlessingSkin 源码，安装插件即可使用
+- **每次登录自动同步用户名和邮箱**：从 OIDC Provider 获取最新用户信息并同步到本地
+- **基于 OpenID (sub) 绑定**：使用 OIDC subject 标识符绑定用户，避免邮箱变更导致的账户问题
+- **支持多 Provider**：通过 `OIDC_ISSUER` 配置支持多个 OIDC Provider
 
 ---
 
@@ -25,6 +28,7 @@ zip文件.zip
 └── oauth-oidc  
     ├── LICENSE  
     ├── bootstrap.php  
+    ├── callbacks.php  
     ├── composer.json  
     ├── lang  
     │   ├── en  
@@ -34,8 +38,10 @@ zip文件.zip
     ├── package.json  
     ├── readme.md  
     └── src  
+        ├── OIDCAuthController.php  
         ├── OIDCExtendSocialite.php  
-        └── OIDCProvider.php
+        ├── OIDCProvider.php  
+        └── OIDCUserBinding.php
 ```
 
 ⚠️ 如果插件未生效：  
@@ -48,7 +54,7 @@ zip文件.zip
 
 1. 在 Casdoor 后台新建一个应用，并设置回调地址为：  
 
-https://your-blessingskin-domain/auth/login/oidc/callback  
+https://your-blessingskin-domain/oidc/callback  
 
 2. 正确配置应用程序并获取 Casdoor 提供的 **Client ID**、**Client Secret**。  
 
@@ -56,11 +62,11 @@ https://your-blessingskin-domain/auth/login/oidc/callback
 
 - OIDC_CLIENT_ID=your-client-id  
 - OIDC_CLIENT_SECRET=your-client-secret  
-- OIDC_REDIRECT_URI=https://your-blessingskin-domain/auth/login/oidc/callback  
+- OIDC_REDIRECT_URI=https://your-blessingskin-domain/oidc/callback  
 - OIDC_DISPLAY_NAME='OIDC'  
 - OIDC_AUTHORIZE_URL=https://your-oidc-domain/login/oauth/authorize  
 - OIDC_TOKEN_URL=https://your-oidc-domain/api/login/oauth/access_token  
-- OIDC_USERINFO_URL=https://your-oidc-domain/api/userinfo  
+- OIDC_USERINFO_URL=https://your-oidc-domain/api/userinfo
 
 
 以Casdoor为例，最后三个参数可访问Provider域名+后缀.well-known/openid-configuration获取  
@@ -72,8 +78,90 @@ https://your-blessingskin-domain/auth/login/oidc/callback
 ---
 
 ## 已知问题（小）
-目前，我由于个人原因，无额外精力对以下内容进行修复、适配，非常抱歉，并且由于不能完全依赖AI，我短期内无更新计划，如有需要，推荐fork后自行修改
-- 登录与blessingskin系统内的email绑定，没有实现openid绑定，仅可实现快速登录。例如：SSO提供的email改变时会被判定为新账号，同理，如果在blessingskin修改邮箱，SSO账号依旧会被尝试新注册账号。
+
+无。已通过 OpenID (sub) 绑定解决用户关联问题。
+
+---
+
+## 用户绑定机制
+
+本插件使用 OIDC `sub` claim（用户唯一标识符）绑定 BlessingSkin 用户：
+
+1. **首次登录**：通过邮箱查找或创建用户，同时创建 `sub` → `uid` 绑定记录
+2. **后续登录**：通过 `sub` 查找绑定记录，直接获取关联用户
+3. **邮箱变更**：不影响用户关联，仍通过 `sub` 识别用户
+4. **信息同步**：每次登录同步用户名和邮箱
+
+### 绑定流程
+
+```
+OIDC 登录
+    │
+    ▼
+获取 sub + issuer
+    │
+    ▼
+┌────────────────────────┐
+│ 查询 oidc_user_bindings │
+│ WHERE sub=? AND issuer=?│
+└───────────┬────────────┘
+            │
+       ┌────┴────┐
+       │ 找到?   │
+       └────┬────┘
+            │
+     ┌──────┴──────┐
+     │             │
+    是            否
+     │             │
+     ▼             ▼
+  通过 uid    通过 email 查找用户
+  获取用户         │
+     │        ┌────┴────┐
+     │        │ 找到?   │
+     │        └────┬────┘
+     │             │
+     │       ┌─────┴─────┐
+     │       │           │
+     │      是          否
+     │       │           │
+     │       │           ▼
+     │       │      创建新用户
+     │       │           │
+     │       └─────┬─────┘
+     │             │
+     └──────┬──────┘
+            │
+            ▼
+    创建绑定记录
+    (sub → uid)
+            │
+            ▼
+    同步 nickname + email
+            │
+            ▼
+        登录用户
+```
+
+### 数据库表
+
+插件启用时会自动创建 `oidc_user_bindings` 表存储绑定关系：
+
+| 字段 | 说明 |
+|------|------|
+| `uid` | BlessingSkin 用户 ID |
+| `oidc_sub` | OIDC subject 标识符 |
+| `oidc_issuer` | OIDC Issuer URL（多 Provider 场景） |
+
+### 多 Provider 支持
+
+如果需要使用多个 OIDC Provider，配置 `OIDC_ISSUER` 以区分不同 Provider 的用户：
+
+```env
+OIDC_ISSUER=https://casdoor.example.com
+```
+
+单 Provider 场景可留空。
 
 ## 致谢
 
