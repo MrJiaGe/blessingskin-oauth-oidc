@@ -39,6 +39,8 @@ class OIDCLinkController extends Controller
                 ->withErrors(['oidc' => trans('Blessing\OAuth\OIDC::general.session_expired')]);
         }
 
+
+        // 按邮箱查系统用户，决定展示哪种选择卡片
         $email = $pending['email'];
         $emailExists = !empty($email) && User::where('email', $email)->exists();
 
@@ -67,7 +69,7 @@ class OIDCLinkController extends Controller
      * @param Filter $filter
      * @return \Illuminate\Http\RedirectResponse
      */
-public function createNewAccount(Dispatcher $dispatcher, Filter $filter)
+    public function createNewAccount(Dispatcher $dispatcher, Filter $filter)
     {
         $pending = OIDCSession::getPending();
 
@@ -94,10 +96,10 @@ public function createNewAccount(Dispatcher $dispatcher, Filter $filter)
                 ->withErrors(['oidc' => 'OIDC Provider did not provide email.']);
         }
 
-        // 安全拦截：如果邮箱已存在，不应走到这里，退回选择页
+        // 安全兜底：这个端点只应在「邮箱不存在」时到达
         $existingUser = User::where('email', $email)->first();
         if ($existingUser) {
-            Log::warning('OIDC Link Create: 邮箱已存在，退回选择页', [
+            Log::warning('OIDC Link Create: 邮箱已存在，拒绝创建', [
                 'uid' => $existingUser->uid,
                 'email' => $email,
             ]);
@@ -230,6 +232,7 @@ public function createNewAccount(Dispatcher $dispatcher, Filter $filter)
                 ->withErrors(['oidc' => trans('Blessing\OAuth\OIDC::general.session_expired')]);
         }
 
+        // 检查当前 BlessingSkin 用户是否已绑定过其他 OIDC 账号
         $user = Auth::user();
         if (!$user) {
             Log::warning('OIDC Link Complete: 用户未登录');
@@ -256,6 +259,7 @@ public function createNewAccount(Dispatcher $dispatcher, Filter $filter)
                 ->withErrors(['oidc' => trans('Blessing\OAuth\OIDC::general.already_linked')]);
         }
 
+        // 检查这个 OIDC sub 是否已被其他用户绑定
         $oidcBinding = OIDCUserBinding::findBySub($sub, $issuer);
         if ($oidcBinding) {
             if ($token) {

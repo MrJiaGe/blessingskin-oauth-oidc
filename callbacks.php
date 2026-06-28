@@ -1,7 +1,9 @@
 <?php
 
+// 插件生命周期钩子：启用时建映射表，卸载时不删表（防止误删绑定数据）
+
 use App\Events\PluginWasEnabled;
-// use App\Events\PluginWasDeleted;  // 暂时注释，调试用
+// use App\Events\PluginWasDeleted;  // 调试中，防止误删映射数据
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 

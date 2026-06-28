@@ -74,8 +74,19 @@ https://your-blessingskin-domain/oidc/callback
 - OIDC_TOKEN_URL=https://your-oidc-domain/api/login/oauth/access_token  
 - OIDC_USERINFO_URL=https://your-oidc-domain/api/userinfo
 - OIDC_LINK_ENABLED=true  # 可选，启用账号关联选择功能（默认 true）
+- OIDC_ISSUER=  
 
-以Casdoor为例，最后三个参数可访问Provider域名+后缀.well-known/openid-configuration获取
+### 多 Provider 支持
+
+如果需要使用多个 OIDC Provider，配置 `OIDC_ISSUER` 以区分不同 Provider 的用户：
+
+```env
+OIDC_ISSUER=https://casdoor.example.com
+```
+
+单 Provider 场景可留空。
+
+以Casdoor为例，最后三个参数可访问Provider域名+后缀.well-known/openid-configuration获取  
 
 如果遇到问题可以将.well-known/openid-configuration地址附带.env.example文件发给大模型咨询  
 
@@ -109,53 +120,15 @@ https://your-blessingskin-domain/oidc/callback
 ### 绑定流程
 
 ```
-OIDC 登录
-    │
-    ▼
-获取 sub + issuer
-    │
-    ▼
-┌────────────────────────┐
-│ 查询 oidc_user_bindings │
-│ WHERE sub=? AND issuer=?│
-└───────────┬────────────┘
-            │
-       ┌────┴────┐
-       │ 找到?   │
-       └────┬────┘
-            │
-     ┌──────┴──────┐
-     │             │
-    是            否
-     │             │
-     ▼             ▼
-  通过 uid    检查 OIDC_LINK_ENABLED
-  获取用户         │
-     │        ┌────┴────┐
-     │        │ 启用?   │
-     │        └────┬────┘
-     │             │
-     │       ┌─────┴─────┐
-     │       │           │
-     │      是          否
-     │       │           │
-     │       ▼           ▼
-     │  显示选择页面  通过 email 查找/创建用户
-     │       │           │
-     │  ┌────┴────┐      │
-     │  │         │      │
-     │ 创建新  关联现有   │
-     │ 账户     账户      │
-     │  │         │      │
-     │  │    登录后绑定   │
-     │  │         │      │
-     └──┴─────────┴──────┘
-            │
-            ▼
-    同步 nickname + email
-            │
-            ▼
-        登录用户
+OIDC 回调 → 查 bindings 表
+  ├─ 有映射 → 直接登录
+  └─ 无映射 → 查邮箱
+       ├─ 邮箱存在 → 选择页 A
+       │   ├─ [登录并关联] → autoLink() → 自动绑定 + 自动登录
+       │   └─ [使用其他账户] → 普通登录页(无 OIDC)
+       └─ 邮箱不存在 → 选择页 B
+           ├─ [创建新账户] → createNewAccount() → 注册 + 绑定 + 登录
+           └─ [关联现有账户] → 普通登录页(无 OIDC)
 ```
 
 ### 账号关联选择
@@ -178,16 +151,6 @@ OIDC 登录
 | `uid` | BlessingSkin 用户 ID |
 | `oidc_sub` | OIDC subject 标识符 |
 | `oidc_issuer` | OIDC Issuer URL（多 Provider 场景） |
-
-### 多 Provider 支持
-
-如果需要使用多个 OIDC Provider，配置 `OIDC_ISSUER` 以区分不同 Provider 的用户：
-
-```env
-OIDC_ISSUER=https://casdoor.example.com
-```
-
-单 Provider 场景可留空。
 
 ## 致谢
 

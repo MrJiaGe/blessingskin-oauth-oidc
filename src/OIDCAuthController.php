@@ -80,6 +80,7 @@ class OIDCAuthController extends Controller
             abort(500, 'OIDC authentication failed: ' . ($e->getMessage() ?: 'Unknown error'));
         }
 
+        // 提取 OIDC 标准字段
         $sub = $remoteUser->id;
         $email = $remoteUser->email;
         $issuer = env('OIDC_ISSUER') ?: null;
@@ -91,6 +92,7 @@ class OIDCAuthController extends Controller
             abort(500, 'OIDC Provider did not provide subject (sub) claim.');
         }
 
+        // 先查绑定表
         $binding = OIDCUserBinding::findBySub($sub, $issuer);
         Log::info('OIDC Callback: 查找绑定结果', [
             'binding_found' => !is_null($binding),
@@ -101,6 +103,7 @@ class OIDCAuthController extends Controller
         $user = null;
         $isNewUser = false;
 
+        // 有绑定 → 直接取用户；无绑定 → 走创建流程
         if ($binding) {
             $user = User::where('uid', $binding->uid)->first();
             if (!$user) {
@@ -113,6 +116,7 @@ class OIDCAuthController extends Controller
         }
 
         if (!$user) {
+            // 没有绑定也没有邮箱，无法创建新用户
             if (empty($email)) {
                 Log::error('OIDC Callback: 未获取到邮箱且无绑定记录', [
                     'sub' => $sub,
@@ -123,6 +127,7 @@ class OIDCAuthController extends Controller
 
             $linkEnabled = env('OIDC_LINK_ENABLED', true);
 
+            // 启用关联流程：存 session 并跳转选择页
             if ($linkEnabled) {
                 OIDCSession::storePending([
                     'sub' => $sub,
@@ -141,6 +146,7 @@ class OIDCAuthController extends Controller
                 return redirect()->route('oidc.link.choice');
             }
 
+            // 关闭关联流程：按邮箱查找或创建用户
             $user = User::where('email', $email)->first();
             Log::info('OIDC Callback: 通过邮箱查找用户', ['user_found' => !is_null($user)]);
 
