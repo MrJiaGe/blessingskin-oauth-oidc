@@ -13,12 +13,11 @@
   "prefer-stable": true,
   "require": {
     "socialiteproviders/manager": "^4.0",
-    "socialiteproviders/genericoauth2": "^4.1",
     "psr/log": "^1"
   },
   "autoload": {
     "psr-4": {
-      "Blessing\\OIDC\\": "src/"
+      "Blessing\\OAuth\\OIDC\\": "src/"
     }
   }
 }

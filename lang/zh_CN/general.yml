@@ -1,2 +1,33 @@
 title: 使用 OIDC 登录
 description: 用 OIDC 账号来登录皮肤站
+
+# 账号关联 — 通用
+link_title: 关联账户
+nickname_from_provider: 来自 :provider 的昵称
+link_info: 选择"关联现有账户"后，将自动完成关联并登录。创建新账户后，您可以在个人设置中设置密码。
+
+# 已有账户时的选项
+account_found_title: 在系统中发现您已有账户
+account_found_desc: 您的邮箱 :email 已注册过 BlessingSkin 账户，可以登录后进行关联
+auto_link_button: 登录并关联
+use_other_account: 使用其他账户
+use_other_account_desc: 登录其他 BlessingSkin 账户
+
+# 新邮箱时的选项
+link_description: '邮箱 :email 尚未绑定任何账户，请选择操作方式：'
+link_existing: 关联现有账户
+link_existing_desc: 如果您已有 BlessingSkin 账户，可以登录后进行关联
+login_to_link: 登录并关联
+create_new: 创建新账户
+create_new_desc: 创建一个全新的 BlessingSkin 账户，并使用 OIDC 登录
+create_account: 创建新账户
+
+# 消息
+account_created: 账户创建成功
+password_hint: 您的账户已创建，建议在个人设置中设置密码以便使用邮箱登录
+link_success: OIDC 账户关联成功
+session_expired: 会话已过期，请重新登录
+already_linked: 该账户已关联其他 OIDC 账户
+oidc_already_bound: 该 OIDC 账户已绑定其他用户
+please_login_first: 请先登录
+user_not_found: 未找到对应用户
