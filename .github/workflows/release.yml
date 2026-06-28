@@ -10,24 +10,32 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: 签出仓库
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: 设置发行标签
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+
+      - name: Install Composer dependencies
+        run: composer install --no-dev --optimize-autoloader
+
+      - name: Set release tag
         id: vars
         run: echo "tag=${GITHUB_REF##*/}" >> $GITHUB_OUTPUT
 
-      - name: 准备目录结构
+      - name: Prepare folder structure
         run: |
           mkdir oauth-oidc
           shopt -s dotglob
           mv !(oauth-oidc) oauth-oidc/
 
-      - name: 打包ZIP
+      - name: Create zip package
         run: |
           zip -r "OAuth-OIDC_${{ steps.vars.outputs.tag }}.zip" oauth-oidc
 
-      - name: 上传发行版资产
+      - name: Upload release asset
         uses: softprops/action-gh-release@v2
         with:
           files: "OAuth-OIDC_${{ steps.vars.outputs.tag }}.zip"
