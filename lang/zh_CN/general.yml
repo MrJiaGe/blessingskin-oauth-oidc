@@ -4,7 +4,7 @@ description: 用 OIDC 账号来登录皮肤站
 # 账号关联 — 通用
 link_title: 关联账户
 nickname_from_provider: 来自 :provider 的昵称
-link_info: 选择"关联现有账户"后，您需要先登录现有账户，然后自动完成关联。创建新账户后，您可以在个人设置中设置密码。
+link_info: 选择"关联现有账户"后，将自动完成关联并登录。创建新账户后，您可以在个人设置中设置密码。
 
 # 已有账户时的选项
 account_found_title: 在系统中发现您已有账户
