@@ -39,21 +39,23 @@ class OIDCLinkController extends Controller
                 ->withErrors(['oidc' => trans('Blessing\OAuth\OIDC::general.session_expired')]);
         }
 
-        $token = OIDCSession::getToken();
+        $email = $pending['email'];
+        $emailExists = !empty($email) && User::where('email', $email)->exists();
 
-        $completeUrl = route('oidc.link.complete') . '?token=' . $token;
+        $token = OIDCSession::getToken();
         $loginUrl = url('/auth/login?token=' . $token);
 
         Log::debug('OIDC Link Choice: Token 和 URL', [
             'token' => substr($token, 0, 8) . '...',
-            'complete_url' => $completeUrl,
             'login_url' => $loginUrl,
+            'email_exists' => $emailExists,
         ]);
 
         return view('Blessing\OAuth\OIDC::link-choice', [
-            'email' => $pending['email'],
+            'email' => $email,
             'nickname' => $pending['nickname'],
             'oidc_name' => env('OIDC_DISPLAY_NAME', 'OIDC'),
+            'emailExists' => $emailExists,
             'login_url' => $loginUrl,
         ]);
     }
@@ -65,7 +67,7 @@ class OIDCLinkController extends Controller
      * @param Filter $filter
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function createNewAccount(Dispatcher $dispatcher, Filter $filter)
+public function createNewAccount(Dispatcher $dispatcher, Filter $filter)
     {
         $pending = OIDCSession::getPending();
 
@@ -92,22 +94,16 @@ class OIDCLinkController extends Controller
                 ->withErrors(['oidc' => 'OIDC Provider did not provide email.']);
         }
 
+        // 安全拦截：如果邮箱已存在，不应走到这里，退回选择页
         $existingUser = User::where('email', $email)->first();
         if ($existingUser) {
-            Log::info('OIDC Link Create: 邮箱已存在，自动绑定', [
+            Log::warning('OIDC Link Create: 邮箱已存在，退回选择页', [
                 'uid' => $existingUser->uid,
                 'email' => $email,
-                'sub' => $sub,
             ]);
-
-            OIDCUserBinding::bindUser($existingUser->uid, $sub, $issuer);
             OIDCSession::clear();
-
-            Auth::login($existingUser);
-            $dispatcher->dispatch('auth.login.succeeded', [$existingUser]);
-
-            return redirect('/user')
-                ->with('success', trans('Blessing\OAuth\OIDC::general.account_created'));
+            return redirect('/auth/login')
+                ->withErrors(['oidc' => '该邮箱已注册，请使用「登录并关联」']);
         }
 
         $whip = new Whip();
@@ -149,6 +145,51 @@ class OIDCLinkController extends Controller
         return redirect('/user')
             ->with('success', trans('Blessing\OAuth\OIDC::general.account_created'))
             ->with('hint', trans('Blessing\OAuth\OIDC::general.password_hint'));
+    }
+
+    /**
+     * 自动绑定并登录（邮箱已存在时使用）
+     * 无需用户输入密码，直接绑定 OIDC sub 到该邮箱对应的用户并登录
+     *
+     * @param Dispatcher $dispatcher
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function autoLink(Dispatcher $dispatcher)
+    {
+        $pending = OIDCSession::getPending();
+
+        if (!$pending) {
+            Log::warning('OIDC Auto Link: Session 已过期');
+            return redirect('/auth/login')
+                ->withErrors(['oidc' => trans('Blessing\OAuth\OIDC::general.session_expired')]);
+        }
+
+        $email = $pending['email'];
+        $sub = $pending['sub'];
+        $issuer = $pending['issuer'] ?? null;
+
+        $user = User::where('email', $email)->first();
+        if (!$user) {
+            Log::error('OIDC Auto Link: 邮箱对应的用户不存在', ['email' => $email]);
+            OIDCSession::clear();
+            return redirect('/auth/login')
+                ->withErrors(['oidc' => trans('Blessing\OAuth\OIDC::general.user_not_found')]);
+        }
+
+        OIDCUserBinding::bindUser($user->uid, $sub, $issuer);
+        OIDCSession::clear();
+        Session::forget('oidc_pending_token');
+
+        Auth::login($user);
+        $dispatcher->dispatch('auth.login.succeeded', [$user]);
+
+        Log::info('OIDC Auto Link: 自动绑定并登录成功', [
+            'uid' => $user->uid,
+            'sub' => $sub,
+        ]);
+
+        return redirect('/user')
+            ->with('success', trans('Blessing\OAuth\OIDC::general.link_success'));
     }
 
     /**

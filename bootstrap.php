@@ -115,6 +115,10 @@ return function (Dispatcher $events, Filter $filter, $plugin) {
             ->post('oidc/link/create', 'Blessing\OAuth\OIDC\OIDCLinkController@createNewAccount')
             ->name('oidc.link.create');
 
+        $router->middleware(['web', 'guest'])
+            ->post('oidc/link/auto-link', 'Blessing\OAuth\OIDC\OIDCLinkController@autoLink')
+            ->name('oidc.link.auto-link');
+
         $router->middleware(['web', 'auth'])
             ->get('oidc/link/complete', 'Blessing\OAuth\OIDC\OIDCLinkController@completeLink')
             ->name('oidc.link.complete');
