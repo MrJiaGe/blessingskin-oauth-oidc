@@ -1,7 +1,7 @@
 <?php
 
 use App\Events\PluginWasEnabled;
-use App\Events\PluginWasDeleted;
+// use App\Events\PluginWasDeleted;  // 暂时注释，调试用
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 
@@ -22,7 +22,8 @@ return [
         }
     },
 
-    PluginWasDeleted::class => function ($plugin) {
-        Schema::dropIfExists('oidc_user_bindings');
-    },
+    // PluginWasDeleted::class => function ($plugin) {
+    //     // 调试期间暂时注释，防止误删映射数据
+    //     Schema::dropIfExists('oidc_user_bindings');
+    // },
 ];
