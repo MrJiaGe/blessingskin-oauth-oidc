@@ -28,7 +28,13 @@ jobs:
       - name: Prepare folder structure
         run: |
           mkdir oauth-oidc
-          find . -maxdepth 1 -not -name '.' -not -name 'oauth-oidc' -exec mv {} oauth-oidc/ \;
+          find . -maxdepth 1 \
+            -not -name '.' \
+            -not -name 'oauth-oidc' \
+            -not -name '.git' \
+            -not -name '.github' \
+            -not -name '.gitignore' \
+            -exec mv {} oauth-oidc/ \;
 
       - name: Create zip package
         run: |
