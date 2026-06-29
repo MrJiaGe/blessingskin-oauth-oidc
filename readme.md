@@ -10,7 +10,11 @@
 
 - 支持 OIDC 协议的第三方身份认证  
 - 可用于 [Casdoor](https://casdoor.org/)、Keycloak 等身份提供服务  
-- 无需修改 BlessingSkin 源码，安装插件即可使用  
+- 无需修改 BlessingSkin 源码，安装插件即可使用
+- **每次登录自动同步用户名和邮箱**：从 OIDC Provider 获取最新用户信息并同步到本地
+- **基于 OpenID (sub) 绑定**：使用 OIDC subject 标识符绑定用户，避免邮箱变更导致的账户问题
+- **支持多 Provider**：通过 `OIDC_ISSUER` 配置支持多个 OIDC Provider
+- **账号关联选择**：首次登录时可选择关联现有账户或创建新账户（可配置）
 
 ---
 
@@ -25,6 +29,7 @@ zip文件.zip
 └── oauth-oidc  
     ├── LICENSE  
     ├── bootstrap.php  
+    ├── callbacks.php  
     ├── composer.json  
     ├── lang  
     │   ├── en  
@@ -33,9 +38,16 @@ zip文件.zip
     │       └── general.yml  
     ├── package.json  
     ├── readme.md  
+    ├── resources  
+    │   └── views  
+    │       └── link-choice.twig  
     └── src  
+        ├── OIDCAuthController.php  
         ├── OIDCExtendSocialite.php  
-        └── OIDCProvider.php
+        ├── OIDCLinkController.php  
+        ├── OIDCProvider.php  
+        ├── OIDCSession.php  
+        └── OIDCUserBinding.php
 ```
 
 ⚠️ 如果插件未生效：  
@@ -48,7 +60,7 @@ zip文件.zip
 
 1. 在 Casdoor 后台新建一个应用，并设置回调地址为：  
 
-https://your-blessingskin-domain/auth/login/oidc/callback  
+https://your-blessingskin-domain/oidc/callback  
 
 2. 正确配置应用程序并获取 Casdoor 提供的 **Client ID**、**Client Secret**。  
 
@@ -56,12 +68,23 @@ https://your-blessingskin-domain/auth/login/oidc/callback
 
 - OIDC_CLIENT_ID=your-client-id  
 - OIDC_CLIENT_SECRET=your-client-secret  
-- OIDC_REDIRECT_URI=https://your-blessingskin-domain/auth/login/oidc/callback  
+- OIDC_REDIRECT_URI=https://your-blessingskin-domain/oidc/callback  
 - OIDC_DISPLAY_NAME='OIDC'  
 - OIDC_AUTHORIZE_URL=https://your-oidc-domain/login/oauth/authorize  
 - OIDC_TOKEN_URL=https://your-oidc-domain/api/login/oauth/access_token  
-- OIDC_USERINFO_URL=https://your-oidc-domain/api/userinfo  
+- OIDC_USERINFO_URL=https://your-oidc-domain/api/userinfo
+- OIDC_LINK_ENABLED=true  # 可选，启用账号关联选择功能（默认 true）
+- OIDC_ISSUER=  
 
+### 多 Provider 支持
+
+如果需要使用多个 OIDC Provider，配置 `OIDC_ISSUER` 以区分不同 Provider 的用户：
+
+```env
+OIDC_ISSUER=https://casdoor.example.com
+```
+
+单 Provider 场景可留空。
 
 以Casdoor为例，最后三个参数可访问Provider域名+后缀.well-known/openid-configuration获取  
 
@@ -71,9 +94,63 @@ https://your-blessingskin-domain/auth/login/oidc/callback
 
 ---
 
-## 已知问题（小）
-目前，我由于个人原因，无额外精力对以下内容进行修复、适配，非常抱歉，并且由于不能完全依赖AI，我短期内无更新计划，如有需要，推荐fork后自行修改
-- 登录与blessingskin系统内的email绑定，没有实现openid绑定，仅可实现快速登录。例如：SSO提供的email改变时会被判定为新账号，同理，如果在blessingskin修改邮箱，SSO账号依旧会被尝试新注册账号。
+## 已知问题
+
+无。
+
+---
+
+## 历史问题（已修复）
+
+- ~~OIDC 登录关联已有账号后，退出登录再次使用 OIDC 登录时仍要求关联账号~~（v1.2.0 已修复）
+- ~~关联流程中登录页面显示 OIDC 登录选项~~（v1.2.0 已修复）
+- ~~`UserLoggedIn` 事件监听失败导致绑定流程中断~~（v1.2.0 已修复）
+
+---
+
+## 用户绑定机制
+
+本插件使用 OIDC `sub` claim（用户唯一标识符）绑定 BlessingSkin 用户：
+
+1. **首次登录**：通过邮箱查找或创建用户，同时创建 `sub` → `uid` 绑定记录
+2. **后续登录**：通过 `sub` 查找绑定记录，直接获取关联用户
+3. **邮箱变更**：不影响用户关联，仍通过 `sub` 识别用户
+4. **信息同步**：每次登录同步用户名和邮箱
+
+### 绑定流程
+
+```
+OIDC 回调 → 查 bindings 表
+  ├─ 有映射 → 直接登录
+  └─ 无映射 → 查邮箱
+       ├─ 邮箱存在 → 选择页 A
+       │   ├─ [登录并关联] → autoLink() → 自动绑定 + 自动登录
+       │   └─ [使用其他账户] → 普通登录页(无 OIDC)
+       └─ 邮箱不存在 → 选择页 B
+           ├─ [创建新账户] → createNewAccount() → 注册 + 绑定 + 登录
+           └─ [关联现有账户] → 普通登录页(无 OIDC)
+```
+
+### 账号关联选择
+
+当 `OIDC_LINK_ENABLED=true`（默认）时，首次使用 OIDC 登录的用户会看到选择页面：
+
+- **关联现有账户**：如果您已有 BlessingSkin 账户，可以登录后进行关联
+- **创建新账户**：创建一个全新的账户，并使用 OIDC 登录
+
+创建新账户后，用户的密码为空，建议在个人设置中设置密码以便使用邮箱登录。
+
+若不需要此功能，可设置 `OIDC_LINK_ENABLED=false`，系统将自动通过邮箱查找或创建用户。
+
+### 数据库表
+
+插件启用时会自动创建 `oidc_user_bindings` 表存储绑定关系：
+
+| 字段 | 说明 |
+|------|------|
+| `uid` | BlessingSkin 用户 ID |
+| `oidc_sub` | OIDC subject 标识符 |
+| `oidc_issuer` | OIDC Issuer URL（多 Provider 场景） |
 
 ## 致谢
 
