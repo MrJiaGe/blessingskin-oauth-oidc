@@ -32,6 +32,7 @@ jobs:
             -not -name '.' \
             -not -name 'oauth-oidc' \
             -not -name 'docs' \
+            -not -name '.workbuddy' \
             -not -name '.git' \
             -not -name '.github' \
             -not -name '.gitignore' \
