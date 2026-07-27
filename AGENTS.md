@@ -1,6 +1,7 @@
 # AGENTS.md - BlessingSkin OIDC 插件开发指南
 
 本文档为 AI 编程助手提供代码库开发的规范和指南。
+[Blessing Skin 插件开发文档](https://bs-plugin.netlify.app/)
 
 ## 项目概述
 
@@ -41,7 +42,7 @@ cp -r bootstrap.php src lang package.json composer.json LICENSE readme.md dist/o
 cd dist && zip -r ../OAuth-OIDC.zip oauth-oidc
 ```
 
-### 依赖安装
+### 依赖安装 站点程序自带，禁止打包进Release，否则站点会崩溃
 
 ```bash
 composer install --no-dev    # 生产环境
