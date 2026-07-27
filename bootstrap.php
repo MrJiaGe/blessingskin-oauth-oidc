@@ -7,7 +7,6 @@ use App\Services\Hook;
 use Blessing\Filter;
 use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\Session;
 use Laravel\Socialite\Facades\Socialite;
 use SocialiteProviders\Manager\SocialiteWasCalled;
@@ -18,9 +17,6 @@ use Blessing\OAuth\OIDC\OIDCSession;
 use Illuminate\Support\Facades\Log;
 
 return function (Dispatcher $events, Filter $filter, $plugin) {
-    // 注册自定义视图命名空间（views 目录结构不合规时的备选方案）
-    View::addNamespace('Blessing\OAuth\OIDC', __DIR__.'/resources/views');
-
     // 从 .env 注入 OIDC 配置到 Laravel 的 services 数组
     config(['services.oidc' => [
         'client_id'     => env('OIDC_CLIENT_ID'),
@@ -112,6 +108,9 @@ return function (Dispatcher $events, Filter $filter, $plugin) {
 
     // 注册前端 JS（检测待关联状态，自动跳转）
     Hook::addScriptFileToPage($plugin->assets('link-redirect.js'), ['user']);
+
+    // 管理面板：绑定管理页面脚本（仅在 admin/oidc 加载）
+    Hook::addScriptFileToPage($plugin->assets('admin-bindings.js'), ['admin/oidc']);
 
     // ── 管理面板菜单：OIDC → 绑定管理 ──
     Hook::addMenuItem('admin', 10, [

@@ -124,7 +124,50 @@ class OIDCAdminController extends Controller
             'perPage' => $showAll ? 'all' : $perPage,
             'totalPages' => $totalPages,
             'pageSizes' => self::PAGE_SIZES,
+            'pageConfigJson' => $this->buildPageConfigJson($showAll ? 'all' : $perPage),
         ]);
+    }
+
+    /**
+     * 构建注入页面的配置 JSON
+     *
+     * 作为独立 JS 文件（admin-bindings.js）的唯一数据源，
+     * 包含接口地址、当前分页大小与前端文案（i18n）。
+     *
+     * @param int|string $perPage 当前每页条数，'all' 表示全部
+     * @return string JSON 字符串
+     */
+    private function buildPageConfigJson($perPage): string
+    {
+        $config = [
+            'urls' => [
+                'updateField' => url('admin/oidc/update-field'),
+                'delete' => url('admin/oidc/delete'),
+            ],
+            'perPage' => $perPage,
+            'i18n' => [
+                'edit_sub' => trans('Blessing\OAuth\OIDC::general.admin_edit_sub'),
+                'edit_issuer' => trans('Blessing\OAuth\OIDC::general.admin_edit_issuer'),
+                'hint_sub' => trans('Blessing\OAuth\OIDC::general.admin_hint_sub'),
+                'hint_issuer' => trans('Blessing\OAuth\OIDC::general.admin_hint_issuer'),
+                'err_empty' => trans('Blessing\OAuth\OIDC::general.admin_err_empty'),
+                'err_illegal' => trans('Blessing\OAuth\OIDC::general.admin_err_illegal'),
+                'err_danger' => trans('Blessing\OAuth\OIDC::general.admin_err_danger'),
+                'err_too_long' => trans('Blessing\OAuth\OIDC::general.admin_err_too_long'),
+                'large_page_warn' => trans('Blessing\OAuth\OIDC::general.admin_large_page_warn'),
+                'saving' => trans('Blessing\OAuth\OIDC::general.admin_saving'),
+                'deleting' => trans('Blessing\OAuth\OIDC::general.admin_deleting'),
+                'confirm' => trans('Blessing\OAuth\OIDC::general.admin_confirm'),
+                'delete_btn' => trans('Blessing\OAuth\OIDC::general.admin_delete_confirm_btn'),
+            ],
+        ];
+
+        // JSON_HEX_TAG：转义 < > 防止 </script> 闭合注入
+        // JSON_UNESCAPED_UNICODE：中文直接输出，便于排查
+        return json_encode(
+            $config,
+            JSON_HEX_TAG | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+        );
     }
 
     /**
