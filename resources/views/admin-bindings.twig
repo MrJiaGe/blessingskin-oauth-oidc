@@ -1,0 +1,455 @@
+{% extends 'admin.base' %}
+
+{% block title %}{{ trans('Blessing\\OAuth\\OIDC::general.admin_page_title') }}{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-md-12">
+    <div class="card card-primary card-outline">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h3 class="card-title">
+          <i class="fas fa-key mr-1"></i>
+          {{ trans('Blessing\\OAuth\\OIDC::general.admin_page_title') }}
+        </h3>
+        <div>
+          <span class="text-muted mr-2">
+            {{ trans('Blessing\\OAuth\\OIDC::general.admin_total') }}: {{ total }}
+          </span>
+          <form method="get" action="{{ url('admin/oidc') }}" id="perPageForm" class="d-inline">
+            <div class="input-group input-group-sm" style="width: 220px;">
+              <select name="per_page" class="form-control" id="perPageSelect">
+                {% for size in pageSizes %}
+                  <option value="{{ size }}" {{ perPage == size ? 'selected' : '' }}>{{ size }} / {{ trans('Blessing\\OAuth\\OIDC::general.admin_page') }}</option>
+                {% endfor %}
+                <option value="all" {{ perPage == 'all' ? 'selected' : '' }}>{{ trans('Blessing\\OAuth\\OIDC::general.admin_all') }}</option>
+              </select>
+              <div class="input-group-append">
+                <button type="submit" class="btn btn-default">
+                  <i class="fas fa-sync-alt"></i>
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div class="card-body table-responsive p-0">
+        <table class="table table-bordered table-hover text-nowrap">
+          <thead>
+            <tr>
+              <th style="width:60px">{{ trans('Blessing\\OAuth\\OIDC::general.admin_col_id') }}</th>
+              <th style="width:70px">UID</th>
+              <th>{{ trans('Blessing\\OAuth\\OIDC::general.admin_col_email') }}</th>
+              <th>{{ trans('Blessing\\OAuth\\OIDC::general.admin_col_nickname') }}</th>
+              <th>OIDC SUB</th>
+              <th>OIDC Issuer</th>
+              <th style="width:160px">updated_at</th>
+              <th style="width:70px">{{ trans('Blessing\\OAuth\\OIDC::general.admin_col_actions') }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% if bindings|length == 0 %}
+              <tr>
+                <td colspan="8" class="text-center text-muted py-4">
+                  {{ trans('Blessing\\OAuth\\OIDC::general.admin_empty') }}
+                </td>
+              </tr>
+            {% else %}
+              {% for b in bindings %}
+                <tr id="row-{{ b.id }}">
+                  <td>{{ b.id }}</td>
+                  <td>{{ b.uid }}</td>
+                  <td>{{ b.email ?? '-' }}</td>
+                  <td>{{ b.nickname ?? '-' }}</td>
+                  <td>
+                    <code class="text-break" style="word-break:break-all;">{{ b.oidc_sub }}</code>
+                    <button type="button"
+                            class="btn btn-xs btn-outline-primary ml-1 btn-edit-field"
+                            data-toggle="modal" data-target="#editModal"
+                            data-id="{{ b.id }}"
+                            data-field="oidc_sub"
+                            data-value="{{ b.oidc_sub }}"
+                            title="{{ trans('Blessing\\OAuth\\OIDC::general.admin_edit_sub') }}">
+                      <i class="fas fa-pen"></i>
+                    </button>
+                  </td>
+                  <td>
+                    {% if b.oidc_issuer %}
+                      <code class="text-break" style="word-break:break-all;">{{ b.oidc_issuer }}</code>
+                    {% else %}
+                      <span class="text-muted">-</span>
+                    {% endif %}
+                    <button type="button"
+                            class="btn btn-xs btn-outline-primary ml-1 btn-edit-field"
+                            data-toggle="modal" data-target="#editModal"
+                            data-id="{{ b.id }}"
+                            data-field="oidc_issuer"
+                            data-value="{{ b.oidc_issuer ?? '' }}"
+                            title="{{ trans('Blessing\\OAuth\\OIDC::general.admin_edit_issuer') }}">
+                      <i class="fas fa-pen"></i>
+                    </button>
+                  </td>
+                  <td>{{ b.updated_at_formatted }}</td>
+                  <td>
+                    <button type="button"
+                            class="btn btn-xs btn-outline-danger btn-delete"
+                            data-toggle="modal" data-target="#deleteModal"
+                            data-id="{{ b.id }}"
+                            data-uid="{{ b.uid }}"
+                            data-email="{{ b.email ?? '-' }}"
+                            data-nickname="{{ b.nickname ?? '-' }}"
+                            data-sub="{{ b.oidc_sub }}"
+                            data-issuer="{{ b.oidc_issuer ?? '-' }}"
+                            data-updated-at="{{ b.updated_at_formatted }}"
+                            title="{{ trans('Blessing\\OAuth\\OIDC::general.admin_delete') }}">
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  </td>
+                </tr>
+              {% endfor %}
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+
+      {% if totalPages > 1 %}
+        <div class="card-footer">
+          <nav>
+            <ul class="pagination pagination-sm mb-0 justify-content-center">
+              {% if page > 1 %}
+                <li class="page-item">
+                  <a class="page-link" href="{{ url('admin/oidc?page=' ~ (page - 1) ~ '&per_page=' ~ perPage) }}">
+                    <i class="fas fa-chevron-left"></i>
+                  </a>
+                </li>
+              {% else %}
+                <li class="page-item disabled">
+                  <span class="page-link"><i class="fas fa-chevron-left"></i></span>
+                </li>
+              {% endif %}
+
+              {% set startPage = max(1, page - 2) %}
+              {% set endPage = min(totalPages, page + 2) %}
+
+              {% if startPage > 1 %}
+                <li class="page-item">
+                  <a class="page-link" href="{{ url('admin/oidc?page=1&per_page=' ~ perPage) }}">1</a>
+                </li>
+                {% if startPage > 2 %}
+                  <li class="page-item disabled"><span class="page-link">...</span></li>
+                {% endif %}
+              {% endif %}
+
+              {% for p in startPage..endPage %}
+                {% if p == page %}
+                  <li class="page-item active"><span class="page-link">{{ p }}</span></li>
+                {% else %}
+                  <li class="page-item">
+                    <a class="page-link" href="{{ url('admin/oidc?page=' ~ p ~ '&per_page=' ~ perPage) }}">{{ p }}</a>
+                  </li>
+                {% endif %}
+              {% endfor %}
+
+              {% if endPage < totalPages %}
+                {% if endPage < totalPages - 1 %}
+                  <li class="page-item disabled"><span class="page-link">...</span></li>
+                {% endif %}
+                <li class="page-item">
+                  <a class="page-link" href="{{ url('admin/oidc?page=' ~ totalPages ~ '&per_page=' ~ perPage) }}">{{ totalPages }}</a>
+                </li>
+              {% endif %}
+
+              {% if page < totalPages %}
+                <li class="page-item">
+                  <a class="page-link" href="{{ url('admin/oidc?page=' ~ (page + 1) ~ '&per_page=' ~ perPage) }}">
+                    <i class="fas fa-chevron-right"></i>
+                  </a>
+                </li>
+              {% else %}
+                <li class="page-item disabled">
+                  <span class="page-link"><i class="fas fa-chevron-right"></i></span>
+                </li>
+              {% endif %}
+            </ul>
+          </nav>
+          <p class="text-center text-muted mt-2 mb-0" style="font-size:12px;">
+            {{ trans('Blessing\\OAuth\\OIDC::general.admin_pagination_info', {'total': total, 'page': page, 'pages': totalPages}) }}
+          </p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="editModal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="editModalTitle">{{ trans('Blessing\\OAuth\\OIDC::general.admin_edit') }}</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="editBindingId">
+        <input type="hidden" id="editFieldName">
+        <div class="form-group">
+          <label id="editFieldLabel" for="editFieldValue"></label>
+          <input type="text" class="form-control" id="editFieldValue"
+                 maxlength="512" autocomplete="off" spellcheck="false">
+          <small id="editFieldHint" class="form-text text-muted"></small>
+          <div id="editFieldError" class="text-danger mt-1" style="display:none;font-size:13px;"></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">
+          {{ trans('Blessing\\OAuth\\OIDC::general.admin_cancel') }}
+        </button>
+        <button type="button" class="btn btn-primary" id="editConfirmBtn">
+          {{ trans('Blessing\\OAuth\\OIDC::general.admin_confirm') }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header bg-danger">
+        <h5 class="modal-title text-white">
+          <i class="fas fa-exclamation-triangle mr-1"></i>
+          {{ trans('Blessing\\OAuth\\OIDC::general.admin_delete_title') }}
+        </h5>
+        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="deleteBindingId">
+        <p>{{ trans('Blessing\\OAuth\\OIDC::general.admin_delete_confirm') }}</p>
+        <table class="table table-sm table-bordered">
+          <tr><th style="width:120px">ID</th><td id="delInfoId"></td></tr>
+          <tr><th>UID</th><td id="delInfoUid"></td></tr>
+          <tr><th>{{ trans('Blessing\\OAuth\\OIDC::general.admin_col_email') }}</th><td id="delInfoEmail"></td></tr>
+          <tr><th>{{ trans('Blessing\\OAuth\\OIDC::general.admin_col_nickname') }}</th><td id="delInfoNickname"></td></tr>
+          <tr><th>OIDC SUB</th><td id="delInfoSub" style="word-break:break-all;"></td></tr>
+          <tr><th>OIDC Issuer</th><td id="delInfoIssuer" style="word-break:break-all;"></td></tr>
+          <tr><th>updated_at</th><td id="delInfoUpdatedAt"></td></tr>
+        </table>
+        <p class="text-danger mb-0">
+          <i class="fas fa-exclamation-circle mr-1"></i>
+          {{ trans('Blessing\\OAuth\\OIDC::general.admin_delete_warning') }}
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">
+          {{ trans('Blessing\\OAuth\\OIDC::general.admin_cancel') }}
+        </button>
+        <button type="button" class="btn btn-danger" id="deleteConfirmBtn">
+          <i class="fas fa-trash mr-1"></i>
+          {{ trans('Blessing\\OAuth\\OIDC::general.admin_delete_confirm_btn') }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block before_foot %}
+<script>
+(function () {
+  'use strict';
+
+  var SUB_REGEX = /^[a-zA-Z0-9\-_.\/:@+=~]+$/;
+  var ISSUER_REGEX = /^[a-zA-Z0-9\-_.\/:@+=~?#%&]*$/;
+  var DANGER_PATTERNS = [
+    /\b(DROP|DELETE|INSERT|UPDATE|ALTER|CREATE|TRUNCATE|EXEC|EXECUTE)\b/i,
+    /\b(UNION\s+SELECT|OR\s+1\s*=\s*1|AND\s+1\s*=\s*1)\b/i,
+    /(--|\/\*|\*\/|;)/
+  ];
+
+  var L = {
+    edit_sub: '{{ trans('Blessing\\OAuth\\OIDC::general.admin_edit_sub')|e('js') }}',
+    edit_issuer: '{{ trans('Blessing\\OAuth\\OIDC::general.admin_edit_issuer')|e('js') }}',
+    hint_sub: '{{ trans('Blessing\\OAuth\\OIDC::general.admin_hint_sub')|e('js') }}',
+    hint_issuer: '{{ trans('Blessing\\OAuth\\OIDC::general.admin_hint_issuer')|e('js') }}',
+    err_empty: '{{ trans('Blessing\\OAuth\\OIDC::general.admin_err_empty')|e('js') }}',
+    err_illegal: '{{ trans('Blessing\\OAuth\\OIDC::general.admin_err_illegal')|e('js') }}',
+    err_danger: '{{ trans('Blessing\\OAuth\\OIDC::general.admin_err_danger')|e('js') }}',
+    err_too_long: '{{ trans('Blessing\\OAuth\\OIDC::general.admin_err_too_long')|e('js') }}',
+    large_page_warn: '{{ trans('Blessing\\OAuth\\OIDC::general.admin_large_page_warn')|e('js') }}',
+    saving: '{{ trans('Blessing\\OAuth\\OIDC::general.admin_saving')|e('js') }}',
+    deleting: '{{ trans('Blessing\\OAuth\\OIDC::general.admin_deleting')|e('js') }}',
+    confirm: '{{ trans('Blessing\\OAuth\\OIDC::general.admin_confirm')|e('js') }}',
+    delete_btn: '{{ trans('Blessing\\OAuth\\OIDC::general.admin_delete_confirm_btn')|e('js') }}'
+  };
+
+  function validateField(field, value) {
+    if (field === 'oidc_sub') {
+      if (value.trim() === '') return L.err_empty;
+      if (value.length > 255) return L.err_too_long;
+      if (!SUB_REGEX.test(value)) return L.err_illegal;
+    } else if (field === 'oidc_issuer') {
+      if (value.trim() !== '' && value.length > 512) return L.err_too_long;
+      if (value.trim() !== '' && !ISSUER_REGEX.test(value)) return L.err_illegal;
+    }
+    for (var i = 0; i < DANGER_PATTERNS.length; i++) {
+      if (DANGER_PATTERNS[i].test(value)) return L.err_danger;
+    }
+    return null;
+  }
+
+  function getCsrfToken() {
+    var meta = document.querySelector('meta[name="csrf-token"]');
+    return meta ? meta.getAttribute('content') : '';
+  }
+
+  function postAjax(url, data, onSuccess, onError) {
+    var payload = Object.assign({ _token: getCsrfToken() }, data);
+
+    fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': getCsrfToken(),
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    })
+    .then(function (r) { return r.json(); })
+    .then(function (resp) {
+      if (resp.code === 0) {
+        onSuccess(resp);
+      } else {
+        onError(resp.message || 'Error');
+      }
+    })
+    .catch(function (err) {
+      onError(err.message || 'Network error');
+    });
+  }
+
+  var editBtn = document.getElementById('editConfirmBtn');
+  var editInput = document.getElementById('editFieldValue');
+  var editError = document.getElementById('editFieldError');
+
+  document.querySelectorAll('.btn-edit-field').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var field = this.getAttribute('data-field');
+      var value = this.getAttribute('data-value') || '';
+      var id = this.getAttribute('data-id');
+
+      document.getElementById('editBindingId').value = id;
+      document.getElementById('editFieldName').value = field;
+      editInput.value = value;
+      editInput.classList.remove('is-invalid', 'is-valid');
+      editError.style.display = 'none';
+      editError.textContent = '';
+      editBtn.disabled = false;
+      editBtn.textContent = L.confirm;
+
+      if (field === 'oidc_sub') {
+        document.getElementById('editModalTitle').textContent = L.edit_sub;
+        document.getElementById('editFieldLabel').textContent = 'OIDC Subject (sub)';
+        document.getElementById('editFieldHint').textContent = L.hint_sub;
+      } else {
+        document.getElementById('editModalTitle').textContent = L.edit_issuer;
+        document.getElementById('editFieldLabel').textContent = 'OIDC Issuer';
+        document.getElementById('editFieldHint').textContent = L.hint_issuer;
+      }
+    });
+  });
+
+  editInput.addEventListener('input', function () {
+    var field = document.getElementById('editFieldName').value;
+    var err = validateField(field, this.value);
+    if (err) {
+      editError.textContent = err;
+      editError.style.display = 'block';
+      this.classList.add('is-invalid');
+      this.classList.remove('is-valid');
+    } else {
+      editError.style.display = 'none';
+      this.classList.remove('is-invalid');
+      if (this.value.trim() !== '') this.classList.add('is-valid');
+    }
+  });
+
+  editBtn.addEventListener('click', function () {
+    var field = document.getElementById('editFieldName').value;
+    var value = editInput.value;
+    var id = document.getElementById('editBindingId').value;
+
+    var err = validateField(field, value);
+    if (err) {
+      editError.textContent = err;
+      editError.style.display = 'block';
+      editInput.classList.add('is-invalid');
+      return;
+    }
+
+    editBtn.disabled = true;
+    editBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>' + L.saving;
+
+    postAjax('{{ url('admin/oidc/update-field') }}', {
+      id: id,
+      field: field,
+      value: value
+    }, function () {
+      window.location.reload();
+    }, function (msg) {
+      editBtn.disabled = false;
+      editBtn.textContent = L.confirm;
+      editError.textContent = msg;
+      editError.style.display = 'block';
+    });
+  });
+
+  var deleteBtn = document.getElementById('deleteConfirmBtn');
+
+  document.querySelectorAll('.btn-delete').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      document.getElementById('deleteBindingId').value = this.getAttribute('data-id');
+      document.getElementById('delInfoId').textContent = this.getAttribute('data-id');
+      document.getElementById('delInfoUid').textContent = this.getAttribute('data-uid');
+      document.getElementById('delInfoEmail').textContent = this.getAttribute('data-email');
+      document.getElementById('delInfoNickname').textContent = this.getAttribute('data-nickname');
+      document.getElementById('delInfoSub').textContent = this.getAttribute('data-sub');
+      document.getElementById('delInfoIssuer').textContent = this.getAttribute('data-issuer');
+      document.getElementById('delInfoUpdatedAt').textContent = this.getAttribute('data-updated-at');
+      deleteBtn.disabled = false;
+      deleteBtn.innerHTML = '<i class="fas fa-trash mr-1"></i>' + L.delete_btn;
+    });
+  });
+
+  deleteBtn.addEventListener('click', function () {
+    var id = document.getElementById('deleteBindingId').value;
+
+    deleteBtn.disabled = true;
+    deleteBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>' + L.deleting;
+
+    postAjax('{{ url('admin/oidc/delete') }}', { id: id }, function () {
+      window.location.reload();
+    }, function (msg) {
+      deleteBtn.disabled = false;
+      deleteBtn.innerHTML = '<i class="fas fa-trash mr-1"></i>' + L.delete_btn;
+      alert(msg);
+    });
+  });
+
+  var perPageSelect = document.getElementById('perPageSelect');
+  var perPageForm = document.getElementById('perPageForm');
+
+  if (perPageSelect && perPageForm) {
+    perPageSelect.addEventListener('change', function () {
+      var val = this.value;
+      var numVal = parseInt(val, 10);
+      if (val === 'all' || numVal > 50) {
+        if (!confirm(L.large_page_warn)) {
+          this.value = '{{ perPage }}';
+          return;
+        }
+      }
+      perPageForm.submit();
+    });
+  }
+})();
+</script>
+{% endblock %}

@@ -113,6 +113,13 @@ return function (Dispatcher $events, Filter $filter, $plugin) {
     // 注册前端 JS（检测待关联状态，自动跳转）
     Hook::addScriptFileToPage($plugin->assets('link-redirect.js'), ['user']);
 
+    // ── 管理面板菜单：OIDC → 绑定管理 ──
+    Hook::addMenuItem('admin', 10, [
+        'title' => 'Blessing\OAuth\OIDC::general.admin_menu_title',
+        'link'  => 'admin/oidc',
+        'icon'  => 'fa-key',
+    ]);
+
     // ── 路由注册 ──
     Hook::addRoute(function ($router) {
         // OIDC 回调（IDP 授权后跳转至此）
@@ -142,5 +149,16 @@ return function (Dispatcher $events, Filter $filter, $plugin) {
         // 前端 JS 轮询接口，检查是否有待关联
         $router->middleware(['web', 'auth'])
             ->get('oidc/link/check-pending', 'Blessing\OAuth\OIDC\OIDCLinkController@checkPending');
+
+        // ── 管理面板：OIDC 绑定管理 ──
+        $router->middleware(['web', 'auth', 'role:admin'])
+            ->get('admin/oidc', 'Blessing\OAuth\OIDC\OIDCAdminController@index')
+            ->name('admin.oidc');
+
+        $router->middleware(['web', 'auth', 'role:admin'])
+            ->post('admin/oidc/update-field', 'Blessing\OAuth\OIDC\OIDCAdminController@updateField');
+
+        $router->middleware(['web', 'auth', 'role:admin'])
+            ->post('admin/oidc/delete', 'Blessing\OAuth\OIDC\OIDCAdminController@destroy');
     });
 };

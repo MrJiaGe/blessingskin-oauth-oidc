@@ -31,3 +31,56 @@ already_linked: 该账户已关联其他 OIDC 账户
 oidc_already_bound: 该 OIDC 账户已绑定其他用户
 please_login_first: 请先登录
 user_not_found: 未找到对应用户
+
+# 管理面板 — 菜单与页面
+admin_menu_title: OIDC
+admin_page_title: OIDC 绑定管理
+admin_total: 共
+admin_page: 页
+admin_all: 全部
+admin_empty: 暂无绑定记录
+admin_pagination_info: '共 :total 条，第 :page / :pages 页'
+admin_large_page_warn: 单次加载超过 50 条可能造成数据库并发压力，确定继续吗？
+
+# 管理面板 — 表格列
+admin_col_id: ID
+admin_col_email: 用户邮箱
+admin_col_nickname: 用户昵称
+admin_col_actions: 操作
+
+# 管理面板 — 操作按钮
+admin_edit: 编辑
+admin_edit_sub: 编辑 OIDC SUB
+admin_edit_issuer: 编辑 OIDC Issuer
+admin_delete: 删除
+admin_delete_title: 删除绑定
+admin_delete_confirm: 确定要删除以下 OIDC 绑定记录吗？
+admin_delete_warning: 此操作将删除整行绑定记录，不可恢复。
+admin_delete_confirm_btn: 确认删除
+admin_cancel: 取消
+admin_confirm: 确认
+
+# 管理面板 — 编辑提示
+admin_hint_sub: '允许字母、数字以及 - _ . / : @ + = ~'
+admin_hint_issuer: '允许标准 URI 字符；留空表示清除 Issuer'
+admin_saving: 保存中
+admin_deleting: 删除中
+
+# 管理面板 — 前端校验
+admin_err_empty: 内容不能为空
+admin_err_illegal: 包含非法字符
+admin_err_danger: 检测到危险内容
+admin_err_too_long: 内容过长
+
+# 管理面板 — 后端消息
+admin_invalid_id: 无效的绑定 ID
+admin_invalid_field: 无效的字段
+admin_value_empty: 值不能为空
+admin_value_too_long: 值过长
+admin_illegal_chars: 包含非法字符
+admin_sub_conflict: 该 SUB 已被其他记录占用
+admin_not_found: 绑定记录不存在
+admin_save_failed: 保存失败
+admin_update_success: 更新成功
+admin_delete_failed: 删除失败
+admin_delete_success: 删除成功
