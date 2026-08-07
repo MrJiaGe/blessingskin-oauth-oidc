@@ -7,7 +7,6 @@ use App\Services\Hook;
 use Blessing\Filter;
 use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\Session;
 use Laravel\Socialite\Facades\Socialite;
 use SocialiteProviders\Manager\SocialiteWasCalled;
@@ -18,9 +17,6 @@ use Blessing\OAuth\OIDC\OIDCSession;
 use Illuminate\Support\Facades\Log;
 
 return function (Dispatcher $events, Filter $filter, $plugin) {
-    // 注册自定义视图命名空间（views 目录结构不合规时的备选方案）
-    View::addNamespace('Blessing\OAuth\OIDC', __DIR__.'/resources/views');
-
     // 从 .env 注入 OIDC 配置到 Laravel 的 services 数组
     config(['services.oidc' => [
         'client_id'     => env('OIDC_CLIENT_ID'),
@@ -113,6 +109,16 @@ return function (Dispatcher $events, Filter $filter, $plugin) {
     // 注册前端 JS（检测待关联状态，自动跳转）
     Hook::addScriptFileToPage($plugin->assets('link-redirect.js'), ['user']);
 
+    // 管理面板：绑定管理页面脚本（仅在 admin/oidc 加载）
+    Hook::addScriptFileToPage($plugin->assets('admin-bindings.js'), ['admin/oidc']);
+
+    // ── 管理面板菜单：OIDC → 绑定管理 ──
+    Hook::addMenuItem('admin', 10, [
+        'title' => 'Blessing\OAuth\OIDC::general.admin_menu_title',
+        'link'  => 'admin/oidc',
+        'icon'  => 'fa-key',
+    ]);
+
     // ── 路由注册 ──
     Hook::addRoute(function ($router) {
         // OIDC 回调（IDP 授权后跳转至此）
@@ -142,5 +148,16 @@ return function (Dispatcher $events, Filter $filter, $plugin) {
         // 前端 JS 轮询接口，检查是否有待关联
         $router->middleware(['web', 'auth'])
             ->get('oidc/link/check-pending', 'Blessing\OAuth\OIDC\OIDCLinkController@checkPending');
+
+        // ── 管理面板：OIDC 绑定管理 ──
+        $router->middleware(['web', 'auth', 'role:admin'])
+            ->get('admin/oidc', 'Blessing\OAuth\OIDC\OIDCAdminController@index')
+            ->name('admin.oidc');
+
+        $router->middleware(['web', 'auth', 'role:admin'])
+            ->post('admin/oidc/update-field', 'Blessing\OAuth\OIDC\OIDCAdminController@updateField');
+
+        $router->middleware(['web', 'auth', 'role:admin'])
+            ->post('admin/oidc/delete', 'Blessing\OAuth\OIDC\OIDCAdminController@destroy');
     });
 };

@@ -33,3 +33,56 @@ already_linked: This account is already linked to another OIDC account
 oidc_already_bound: This OIDC account is already bound to another user
 please_login_first: Please log in first
 user_not_found: User not found
+
+# Admin Panel — Menu & Page
+admin_menu_title: OIDC
+admin_page_title: OIDC Binding Management
+admin_total: Total
+admin_page: page
+admin_all: All
+admin_empty: No binding records found
+admin_pagination_info: ':total records, page :page of :pages'
+admin_large_page_warn: Loading more than 50 records may cause database concurrency issues. Continue?
+
+# Admin Panel — Table Columns
+admin_col_id: ID
+admin_col_email: Email
+admin_col_nickname: Nickname
+admin_col_actions: Actions
+
+# Admin Panel — Action Buttons
+admin_edit: Edit
+admin_edit_sub: Edit OIDC SUB
+admin_edit_issuer: Edit OIDC Issuer
+admin_delete: Delete
+admin_delete_title: Delete Binding
+admin_delete_confirm: Are you sure you want to delete the following OIDC binding record?
+admin_delete_warning: This will permanently delete the entire binding record. This action cannot be undone.
+admin_delete_confirm_btn: Confirm Delete
+admin_cancel: Cancel
+admin_confirm: Confirm
+
+# Admin Panel — Edit Hints
+admin_hint_sub: 'Allowed: letters, digits and - _ . / : @ + = ~'
+admin_hint_issuer: 'Allowed: standard URI characters; leave empty to clear issuer'
+admin_saving: Saving
+admin_deleting: Deleting
+
+# Admin Panel — Frontend Validation
+admin_err_empty: Value cannot be empty
+admin_err_illegal: Contains illegal characters
+admin_err_danger: Dangerous content detected
+admin_err_too_long: Value is too long
+
+# Admin Panel — Backend Messages
+admin_invalid_id: Invalid binding ID
+admin_invalid_field: Invalid field
+admin_value_empty: Value cannot be empty
+admin_value_too_long: Value is too long
+admin_illegal_chars: Contains illegal characters
+admin_sub_conflict: This SUB is already used by another record
+admin_not_found: Binding record not found
+admin_save_failed: Save failed
+admin_update_success: Updated successfully
+admin_delete_failed: Delete failed
+admin_delete_success: Deleted successfully
