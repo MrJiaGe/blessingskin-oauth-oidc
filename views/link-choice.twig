@@ -21,6 +21,7 @@
 {% endif %}
 
 {% if canAutoLink %}
+  <p>{{ trans('Blessing\\OAuth\\OIDC::general.auto_link_description') }}</p>
   <form action="{{ route('oidc.link.auto-link') }}" method="POST" class="mb-3">
     {{ csrf_field()|raw }}
     <input type="hidden" name="flow_id" value="{{ flowId }}">
@@ -40,7 +41,15 @@
   </form>
 {% endif %}
 
+{% if hasExistingBinding %}
+  <p>{{ trans('Blessing\\OAuth\\OIDC::general.existing_binding_description') }}</p>
+{% endif %}
+
 <a href="{{ login_url }}" class="btn btn-outline-primary btn-block">
-  {{ trans('Blessing\\OAuth\\OIDC::general.login_to_link') }}
+  {% if canAutoLink %}
+    {{ trans('Blessing\\OAuth\\OIDC::general.use_other_account') }}
+  {% else %}
+    {{ trans('Blessing\\OAuth\\OIDC::general.login_to_link') }}
+  {% endif %}
 </a>
 {% endblock %}

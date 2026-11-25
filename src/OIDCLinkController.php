@@ -26,6 +26,8 @@ class OIDCLinkController extends Controller
             'nickname' => $identity['nickname'],
             'oidc_name' => env('OIDC_DISPLAY_NAME', 'OIDC'),
             'canAutoLink' => OIDCAccountLink::canAutoLink($identity, $matches),
+            'hasExistingBinding' => $providerEmailVerified && $matches->count() === 1
+                && OIDCUserBinding::where('uid', $matches->first()->uid)->exists(),
             'canCreate' => $matches->isEmpty() && $providerEmailVerified,
             'providerEmailVerified' => $providerEmailVerified,
             'flowId' => $identity['flow_id'],

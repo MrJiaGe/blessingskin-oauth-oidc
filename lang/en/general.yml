@@ -24,7 +24,9 @@ create_new_desc: Create a new BlessingSkin account and use OIDC to log in
 create_account: Create New Account
 
 # Messages
-auto_link_button: "Link and sign in with verified email"
+auto_link_button: Sign In and Continue
+auto_link_description: We found an account with the same email address. If it’s yours, link it to keep your data and sign in automatically next time.
+existing_binding_description: Your sign-in email matches an existing account on this site, which is already linked to another sign-in account. Sign in to your site account to verify your identity, then confirm whether to replace the link.
 authentication_failed: "OIDC sign-in failed. Please try again."
 verified_provider_email_required: "Creating an account requires a verified email from the identity provider."
 email_in_use: "This email is already in use. Sign in to an existing account to link it."

@@ -9,7 +9,7 @@ link_info: 选择"关联现有账户"后，将自动完成关联并登录。创�
 # 已有账户时的选项
 account_found_title: 在系统中发现您已有账户
 account_found_desc: 您的邮箱 :email 已注册过 BlessingSkin 账户，可以登录后进行关联
-use_other_account: 使用其他账户
+use_other_account: 使用另一个账户
 use_other_account_desc: 登录其他 BlessingSkin 账户
 
 # 新邮箱时的选项
@@ -22,7 +22,9 @@ create_new_desc: 创建一个全新的 BlessingSkin 账户，并使用 OIDC 登�
 create_account: 创建新账户
 
 # 消息
-auto_link_button: "按已验证邮箱绑定并登录"
+auto_link_button: 登录并继续
+auto_link_description: 我们找到了一个使用相同邮箱的账户。如果这是您的账户，绑定后即可使用已有数据，以后也能自动登录。
+existing_binding_description: 您登录账户的邮箱与一个站内数据匹配，但该数据已绑定其他登录账号。请先登录站内数据验证身份，再确认是否更换绑定。
 authentication_failed: "OIDC 登录失败，请重新尝试。"
 verified_provider_email_required: "创建账号需要 IdP 提供已验证的邮箱。"
 email_in_use: "该邮箱已被使用，请登录现有账号进行关联。"
