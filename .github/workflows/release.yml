@@ -2,28 +2,43 @@ name: Build and Upload Release Package
 
 on:
   release:
-    types: [published, edited]
+    types: [published]
   workflow_dispatch:
+    inputs:
+      tag:
+        description: 已发布的 Release 标签（例如 v1.3.0）
+        required: true
+        type: string
+
+permissions:
+  contents: write
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      # - name: Setup PHP
-      #   uses: shivammathur/setup-php@v2
-      #   with:
-      #     php-version: '8.1'
-
-      # - name: Install Composer dependencies
-      #   run: composer install --no-dev --optimize-autoloader
-
       - name: Set release tag
         id: vars
-        run: echo "tag=${GITHUB_REF##*/}" >> $GITHUB_OUTPUT
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name || inputs.tag }}
+        run: |
+          git check-ref-format "refs/tags/$RELEASE_TAG"
+          printf 'tag=%s\n' "$RELEASE_TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout release tag
+        uses: actions/checkout@v4
+        with:
+          ref: refs/tags/${{ steps.vars.outputs.tag }}
+          persist-credentials: false
+
+      - name: Verify published release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ steps.vars.outputs.tag }}
+        run: |
+          is_draft=$(gh release view --repo "$GITHUB_REPOSITORY" --json isDraft --jq .isDraft -- "$RELEASE_TAG")
+          test "$is_draft" = false
 
       - name: Prepare folder structure
         run: |
@@ -39,12 +54,16 @@ jobs:
             -exec mv {} oauth-oidc/ \;
 
       - name: Create zip package
+        env:
+          RELEASE_TAG: ${{ steps.vars.outputs.tag }}
         run: |
-          zip -r "OAuth-OIDC_${{ steps.vars.outputs.tag }}.zip" oauth-oidc
+          zip -r "OAuth-OIDC_${RELEASE_TAG//\//_}.zip" oauth-oidc
 
       - name: Upload release asset
         uses: softprops/action-gh-release@v2
         with:
-          files: "OAuth-OIDC_${{ steps.vars.outputs.tag }}.zip"
+          tag_name: ${{ steps.vars.outputs.tag }}
+          files: OAuth-OIDC_*.zip
+          fail_on_unmatched_files: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
