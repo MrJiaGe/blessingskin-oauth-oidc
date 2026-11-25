@@ -9,7 +9,6 @@ link_info: 选择"关联现有账户"后，将自动完成关联并登录。创�
 # 已有账户时的选项
 account_found_title: 在系统中发现您已有账户
 account_found_desc: 您的邮箱 :email 已注册过 BlessingSkin 账户，可以登录后进行关联
-auto_link_button: 登录并关联
 use_other_account: 使用其他账户
 use_other_account_desc: 登录其他 BlessingSkin 账户
 
@@ -23,6 +22,23 @@ create_new_desc: 创建一个全新的 BlessingSkin 账户，并使用 OIDC 登�
 create_account: 创建新账户
 
 # 消息
+auto_link_button: "按已验证邮箱绑定并登录"
+authentication_failed: "OIDC 登录失败，请重新尝试。"
+verified_provider_email_required: "创建账号需要 IdP 提供已验证的邮箱。"
+email_in_use: "该邮箱已被使用，请登录现有账号进行关联。"
+local_email_unverified: "请先用站内方式登录并完成 Blessing Skin 邮箱验证，再关联 OIDC 账号。"
+auto_link_unavailable: "无法按邮箱自动绑定，请登录站内账号后手动关联。"
+confirmation_changed: "账号或绑定资料已变化，请重新核对并确认。"
+email_change_unavailable: "新邮箱未验证或已被占用，请保留站内邮箱。"
+provider_email: "IdP 邮箱"
+current_email: "当前站内邮箱"
+confirm_link: "确认 OIDC 账号关联"
+confirm_replace_binding: "我确认更换同一 IdP 的旧绑定。旧 IdP 账号将无法通过此绑定登录。"
+email_change_notice: "选择更换邮箱会将站内邮箱从 :old 改为 :new。"
+bind_keep_email: "绑定并保留站内邮箱"
+bind_change_email: "绑定并更换邮箱"
+return_to_account: "返回个人中心"
+ambiguous_binding: "OIDC 身份对应多条绑定或标识冲突，请联系站点管理员。"
 account_created: 账户创建成功
 password_hint: 您的账户已创建，建议在个人设置中设置密码以便使用邮箱登录
 link_success: OIDC 账户关联成功

@@ -11,7 +11,6 @@ link_info: >
 # Account Found
 account_found_title: We found you already have an account
 account_found_desc: Your email :email is already registered with a BlessingSkin account. Log in to link it
-auto_link_button: Log In and Link
 use_other_account: Use Another Account
 use_other_account_desc: Log in with a different BlessingSkin account
 
@@ -25,6 +24,23 @@ create_new_desc: Create a new BlessingSkin account and use OIDC to log in
 create_account: Create New Account
 
 # Messages
+auto_link_button: "Link and sign in with verified email"
+authentication_failed: "OIDC sign-in failed. Please try again."
+verified_provider_email_required: "Creating an account requires a verified email from the identity provider."
+email_in_use: "This email is already in use. Sign in to an existing account to link it."
+local_email_unverified: "Sign in to Blessing Skin and verify your local email before linking this OIDC account."
+auto_link_unavailable: "Automatic linking is unavailable. Sign in to your local account to link manually."
+confirmation_changed: "Account or binding details changed. Review them and confirm again."
+email_change_unavailable: "The new email is unverified or already in use. Keep your local email to continue."
+provider_email: "Identity provider email"
+current_email: "Current local email"
+confirm_link: "Confirm OIDC account linking"
+confirm_replace_binding: "I confirm replacing the previous binding for this provider. The old identity will no longer sign in through that binding."
+email_change_notice: "Choosing to change your email will replace :old with :new."
+bind_keep_email: "Link and keep local email"
+bind_change_email: "Link and change email"
+return_to_account: "Return to account"
+ambiguous_binding: "This OIDC identity has conflicting bindings. Contact the site administrator."
 account_created: Account created successfully
 password_hint: Your account has been created. We recommend setting a password in your profile settings to enable email login.
 link_success: OIDC account linked successfully

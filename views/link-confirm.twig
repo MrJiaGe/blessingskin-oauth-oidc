@@ -1,0 +1,54 @@
+{% extends 'auth.base' %}
+
+{% block title %}{{ trans('Blessing\\OAuth\\OIDC::general.confirm_link') }}{% endblock %}
+
+{% block content %}
+<h4>{{ trans('Blessing\\OAuth\\OIDC::general.confirm_link') }}</h4>
+
+{% if errors.has('oidc') %}
+  <div class="alert alert-danger" role="alert">{{ errors.first('oidc') }}</div>
+{% endif %}
+
+<dl>
+  <dt>{{ trans('Blessing\\OAuth\\OIDC::general.current_email') }}</dt>
+  <dd>{{ localEmail }}</dd>
+  {% if providerEmail %}
+    <dt>{{ trans('Blessing\\OAuth\\OIDC::general.provider_email') }}</dt>
+    <dd>{{ providerEmail }}</dd>
+  {% endif %}
+</dl>
+
+{% if not localVerified %}
+  <p class="alert alert-warning">{{ trans('Blessing\\OAuth\\OIDC::general.local_email_unverified') }}</p>
+{% elseif existingBinding and not canReplaceBinding %}
+  <p class="alert alert-warning">{{ trans('Blessing\\OAuth\\OIDC::general.already_linked') }}</p>
+{% else %}
+  <form action="{{ route('oidc.link.complete') }}" method="POST" class="mb-3">
+    {{ csrf_field()|raw }}
+    <input type="hidden" name="flow_id" value="{{ flowId }}">
+    <input type="hidden" name="local_uid" value="{{ localUid }}">
+    <input type="hidden" name="local_email" value="{{ localEmail }}">
+    {% if existingBinding %}
+      <input type="hidden" name="binding_id" value="{{ existingBinding.id }}">
+      <input type="hidden" name="old_sub" value="{{ existingBinding.oidc_sub }}">
+      <label class="d-block">
+        <input type="checkbox" name="replace_binding" value="1" required>
+        {{ trans('Blessing\\OAuth\\OIDC::general.confirm_replace_binding') }}
+      </label>
+    {% endif %}
+    {% if canChangeEmail %}
+      <p class="alert alert-warning">{{ trans('Blessing\\OAuth\\OIDC::general.email_change_notice', {'old': localEmail, 'new': providerEmail}) }}</p>
+    {% endif %}
+    <button type="submit" name="change_email" value="0" class="btn btn-primary btn-block">
+      {{ trans('Blessing\\OAuth\\OIDC::general.bind_keep_email') }}
+    </button>
+    {% if canChangeEmail %}
+      <button type="submit" name="change_email" value="1" class="btn btn-outline-danger btn-block">
+        {{ trans('Blessing\\OAuth\\OIDC::general.bind_change_email') }}
+      </button>
+    {% endif %}
+  </form>
+{% endif %}
+
+<a href="{{ url('/user') }}">{{ trans('Blessing\\OAuth\\OIDC::general.return_to_account') }}</a>
+{% endblock %}
