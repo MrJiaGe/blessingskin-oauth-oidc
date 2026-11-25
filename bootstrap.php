@@ -7,7 +7,6 @@ use App\Services\Hook;
 use Blessing\Filter;
 use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\Session;
 use Laravel\Socialite\Facades\Socialite;
 use SocialiteProviders\Manager\SocialiteWasCalled;
@@ -15,12 +14,8 @@ use SocialiteProviders\Manager\ServiceProvider as SocialiteServiceProvider;
 use Blessing\OAuth\OIDC\OIDCExtendSocialite;
 use Blessing\OAuth\OIDC\OIDCProvider;
 use Blessing\OAuth\OIDC\OIDCSession;
-use Illuminate\Support\Facades\Log;
 
 return function (Dispatcher $events, Filter $filter, $plugin) {
-    // 注册自定义视图命名空间（views 目录结构不合规时的备选方案）
-    View::addNamespace('Blessing\OAuth\OIDC', __DIR__.'/resources/views');
-
     // 从 .env 注入 OIDC 配置到 Laravel 的 services 数组
     config(['services.oidc' => [
         'client_id'     => env('OIDC_CLIENT_ID'),
@@ -53,54 +48,15 @@ return function (Dispatcher $events, Filter $filter, $plugin) {
         return $provider;
     });
 
-    // ── Filter：登录页面捕获 token，用于关联流程 ──
-    $filter->add('auth_page_rows:login', function ($rows) {
-        $token = request()->get('token');
-        if ($token) {
-            $pending = OIDCSession::getPendingByToken($token);
-            if ($pending) {
-                Session::put('oidc_pending_token', $token);
-                Session::save();
-
-                Log::debug('OIDC: 登录页面捕获 pending token', [
-                    'token' => substr($token, 0, 8) . '...',
-                ]);
-            }
+    $events->listen(UserLoggedIn::class, function () {
+        if (OIDCSession::getPending()) {
+            Session::put('last_requested_path', route('oidc.link.confirm'));
         }
-        return $rows;
     });
 
-    // ── Event：用户登录后检测是否有待关联的 OIDC ──
-    $events->listen(UserLoggedIn::class, function ($event) {
-        $user = $event->user;
-
-        Log::debug('OIDC Session: UserLoggedIn 事件触发', [
-            'user_id' => $user->uid ?? null,
-        ]);
-
-        $token = Session::get('oidc_pending_token');
-
-        if ($token) {
-            $pending = OIDCSession::getPendingByToken($token);
-            if ($pending) {
-                // 利用 last_requested_path 让 BlessingSkin 登录后自动跳转
-                Session::put('last_requested_path', url('/oidc/link/complete?token=' . $token));
-
-                Log::info('OIDC: 用户登录成功，设置重定向到关联页面', [
-                    'user_id' => $user->uid,
-                    'token' => substr($token, 0, 8) . '...',
-                ]);
-            }
-        }
-
-        // 登录后 Session 会 regenerate，从 Cache 恢复数据
-        OIDCSession::restoreAfterLogin();
-    });
-
-    // ── Filter：关联流程中隐藏登录页的 OIDC 按钮 ──
     $filter->add('oauth_providers', function (Collection $providers) {
-        if (request()->has('token')) {
-            return collect();  // 关联流程中只显示普通登录表单
+        if (OIDCSession::getPending()) {
+            return collect();
         }
 
         $providers->put('oidc', [
@@ -110,14 +66,22 @@ return function (Dispatcher $events, Filter $filter, $plugin) {
         return $providers;
     });
 
-    // 注册前端 JS（检测待关联状态，自动跳转）
-    Hook::addScriptFileToPage($plugin->assets('link-redirect.js'), ['user']);
+    // 管理面板：绑定管理页面脚本（仅在 admin/oidc 加载）
+    Hook::addScriptFileToPage($plugin->assets('admin-bindings.js'), ['admin/oidc']);
+
+    // ── 管理面板菜单：OIDC → 绑定管理 ──
+    Hook::addMenuItem('admin', 10, [
+        'title' => 'Blessing\OAuth\OIDC::general.admin_menu_title',
+        'link'  => 'admin/oidc',
+        'icon'  => 'fa-key',
+    ]);
 
     // ── 路由注册 ──
     Hook::addRoute(function ($router) {
         // OIDC 回调（IDP 授权后跳转至此）
         $router->middleware(['web', 'guest'])
-            ->get('oidc/callback', 'Blessing\OAuth\OIDC\OIDCAuthController@callback');
+            ->get('oidc/callback', 'Blessing\OAuth\OIDC\OIDCAuthController@callback')
+            ->name('oidc.callback');
 
         // 账号关联选择页（首次登录时展示）
         $router->middleware(['web', 'guest'])
@@ -134,13 +98,23 @@ return function (Dispatcher $events, Filter $filter, $plugin) {
             ->post('oidc/link/auto-link', 'Blessing\OAuth\OIDC\OIDCLinkController@autoLink')
             ->name('oidc.link.auto-link');
 
-        // 登录后完成关联（选择页 A/B 选项 2，先登录再跳转至此）
-        $router->middleware(['web', 'auth'])
-            ->get('oidc/link/complete', 'Blessing\OAuth\OIDC\OIDCLinkController@completeLink')
+        $router->middleware(['web', 'authorize'])
+            ->get('oidc/link/confirm', 'Blessing\OAuth\OIDC\OIDCLinkController@showConfirmation')
+            ->name('oidc.link.confirm');
+
+        $router->middleware(['web', 'authorize'])
+            ->post('oidc/link/complete', 'Blessing\OAuth\OIDC\OIDCLinkController@completeLink')
             ->name('oidc.link.complete');
 
-        // 前端 JS 轮询接口，检查是否有待关联
-        $router->middleware(['web', 'auth'])
-            ->get('oidc/link/check-pending', 'Blessing\OAuth\OIDC\OIDCLinkController@checkPending');
+        // ── 管理面板：OIDC 绑定管理 ──
+        $router->middleware(['web', 'auth', 'role:admin'])
+            ->get('admin/oidc', 'Blessing\OAuth\OIDC\OIDCAdminController@index')
+            ->name('admin.oidc');
+
+        $router->middleware(['web', 'auth', 'role:admin'])
+            ->post('admin/oidc/update-field', 'Blessing\OAuth\OIDC\OIDCAdminController@updateField');
+
+        $router->middleware(['web', 'auth', 'role:admin'])
+            ->post('admin/oidc/delete', 'Blessing\OAuth\OIDC\OIDCAdminController@destroy');
     });
 };

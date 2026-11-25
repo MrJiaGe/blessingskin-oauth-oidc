@@ -1,6 +1,30 @@
 # AGENTS.md - BlessingSkin OIDC 插件开发指南
 
 本文档为 AI 编程助手提供代码库开发的规范和指南。
+[Blessing Skin 插件开发文档首页](https://bs-plugin.netlify.app/)
+[快速创建插件](https://bs-plugin.netlify.app/guide/scaffold.html)
+[插件目录结构](https://bs-plugin.netlify.app/guide/structure.html)
+[插件信息定义](https://bs-plugin.netlify.app/guide/information.html)
+[插件的开始](https://bs-plugin.netlify.app/guide/bootstrap.html)
+[视图](https://bs-plugin.netlify.app/guide/view.html)
+[路由](https://bs-plugin.netlify.app/guide/route.html)
+[多语言](https://bs-plugin.netlify.app/guide/i18n.html)
+[持久化配置](https://bs-plugin.netlify.app/guide/option.html)
+[表单](https://bs-plugin.netlify.app/guide/form.html)
+[辅助函数](https://bs-plugin.netlify.app/guide/helpers.html)
+[数据与模型](https://bs-plugin.netlify.app/guide/models.html)
+[用户认证](https://bs-plugin.netlify.app/guide/auth.html)
+[生命周期钩子](https://bs-plugin.netlify.app/guide/lifecycle.html)
+[数据库](https://bs-plugin.netlify.app/guide/database.html)
+[全局 blessing 变量](https://bs-plugin.netlify.app/guide/frontend-global.html)
+[事件监听（后端）](https://bs-plugin.netlify.app/guide/backend-event.html)
+[事件监听（前端）](https://bs-plugin.netlify.app/guide/frontend-event.html)
+[前端网络请求](https://bs-plugin.netlify.app/guide/fetch.html)
+[声明插件依赖](https://bs-plugin.netlify.app/guide/dependency.html)
+[声明插件冲突](https://bs-plugin.netlify.app/guide/conflicts.html)
+[使用 Composer](https://bs-plugin.netlify.app/guide/composer.html)
+[服务提供者](https://bs-plugin.netlify.app/guide/providers.html)
+[迁移指南](https://bs-plugin.netlify.app/guide/migration.html)
 
 ## 项目概述
 
@@ -42,6 +66,8 @@ cd dist && zip -r ../OAuth-OIDC.zip oauth-oidc
 ```
 
 ### 依赖安装
+
+主要依赖站点程序自带，禁止打包冲突的依赖进Release，否则站点会崩溃
 
 ```bash
 composer install --no-dev    # 生产环境

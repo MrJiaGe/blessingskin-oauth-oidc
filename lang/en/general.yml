@@ -11,7 +11,6 @@ link_info: >
 # Account Found
 account_found_title: We found you already have an account
 account_found_desc: Your email :email is already registered with a BlessingSkin account. Log in to link it
-auto_link_button: Log In and Link
 use_other_account: Use Another Account
 use_other_account_desc: Log in with a different BlessingSkin account
 
@@ -25,6 +24,25 @@ create_new_desc: Create a new BlessingSkin account and use OIDC to log in
 create_account: Create New Account
 
 # Messages
+auto_link_button: Sign In and Continue
+auto_link_description: We found an account with the same email address. If it’s yours, link it to keep your data and sign in automatically next time.
+existing_binding_description: Your sign-in email matches an existing account on this site, which is already linked to another sign-in account. Sign in to your site account to verify your identity, then confirm whether to replace the link.
+authentication_failed: "OIDC sign-in failed. Please try again."
+verified_provider_email_required: "Creating an account requires a verified email from the identity provider."
+email_in_use: "This email is already in use. Sign in to an existing account to link it."
+local_email_unverified: "Sign in to Blessing Skin and verify your local email before linking this OIDC account."
+auto_link_unavailable: "Automatic linking is unavailable. Sign in to your local account to link manually."
+confirmation_changed: "Account or binding details changed. Review them and confirm again."
+email_change_unavailable: "The new email is unverified or already in use. Keep your local email to continue."
+provider_email: "Identity provider email"
+current_email: "Current local email"
+confirm_link: "Confirm OIDC account linking"
+confirm_replace_binding: "I confirm replacing the previous binding for this provider. The old identity will no longer sign in through that binding."
+email_change_notice: "Choosing to change your email will replace :old with :new."
+bind_keep_email: "Link and keep local email"
+bind_change_email: "Link and change email"
+return_to_account: "Return to account"
+ambiguous_binding: "This OIDC identity has conflicting bindings. Contact the site administrator."
 account_created: Account created successfully
 password_hint: Your account has been created. We recommend setting a password in your profile settings to enable email login.
 link_success: OIDC account linked successfully
@@ -33,3 +51,56 @@ already_linked: This account is already linked to another OIDC account
 oidc_already_bound: This OIDC account is already bound to another user
 please_login_first: Please log in first
 user_not_found: User not found
+
+# Admin Panel — Menu & Page
+admin_menu_title: OIDC
+admin_page_title: OIDC Binding Management
+admin_total: Total
+admin_page: page
+admin_all: All
+admin_empty: No binding records found
+admin_pagination_info: ':total records, page :page of :pages'
+admin_large_page_warn: Loading more than 50 records may cause database concurrency issues. Continue?
+
+# Admin Panel — Table Columns
+admin_col_id: ID
+admin_col_email: Email
+admin_col_nickname: Nickname
+admin_col_actions: Actions
+
+# Admin Panel — Action Buttons
+admin_edit: Edit
+admin_edit_sub: Edit OIDC SUB
+admin_edit_issuer: Edit OIDC Issuer
+admin_delete: Delete
+admin_delete_title: Delete Binding
+admin_delete_confirm: Are you sure you want to delete the following OIDC binding record?
+admin_delete_warning: This will permanently delete the entire binding record. This action cannot be undone.
+admin_delete_confirm_btn: Confirm Delete
+admin_cancel: Cancel
+admin_confirm: Confirm
+
+# Admin Panel — Edit Hints
+admin_hint_sub: 'Allowed: letters, digits and - _ . / : @ + = ~'
+admin_hint_issuer: 'Allowed: standard URI characters; leave empty to clear issuer'
+admin_saving: Saving
+admin_deleting: Deleting
+
+# Admin Panel — Frontend Validation
+admin_err_empty: Value cannot be empty
+admin_err_illegal: Contains illegal characters
+admin_err_danger: Dangerous content detected
+admin_err_too_long: Value is too long
+
+# Admin Panel — Backend Messages
+admin_invalid_id: Invalid binding ID
+admin_invalid_field: Invalid field
+admin_value_empty: Value cannot be empty
+admin_value_too_long: Value is too long
+admin_illegal_chars: Contains illegal characters
+admin_sub_conflict: This SUB is already used by another record
+admin_not_found: Binding record not found
+admin_save_failed: Save failed
+admin_update_success: Updated successfully
+admin_delete_failed: Delete failed
+admin_delete_success: Deleted successfully

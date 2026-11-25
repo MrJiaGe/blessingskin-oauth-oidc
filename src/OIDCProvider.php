@@ -15,6 +15,14 @@ class OIDCProvider extends AbstractProvider
 
     protected $scopeSeparator = ' ';
 
+    /** Prevent the generic OAuth callback from applying its email-only login flow. */
+    public function user()
+    {
+        abort_unless(request()->routeIs('oidc.callback'), 403);
+
+        return parent::user();
+    }
+
     /** 构造授权 URL */
     protected function getAuthUrl($state)
     {
@@ -36,7 +44,12 @@ class OIDCProvider extends AbstractProvider
             ],
         ]);
 
-        return json_decode((string) $response->getBody(), true);
+        $claims = json_decode((string) $response->getBody(), true);
+        if (!is_array($claims)) {
+            throw new \UnexpectedValueException('Invalid OIDC UserInfo response');
+        }
+
+        return $claims;
     }
 
     /** 将 OIDC Claims 映射为 Socialite User 对象 */

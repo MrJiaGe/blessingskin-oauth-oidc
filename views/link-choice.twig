@@ -1,0 +1,55 @@
+{% extends 'auth.base' %}
+
+{% block title %}{{ trans('Blessing\\OAuth\\OIDC::general.link_title') }}{% endblock %}
+
+{% block content %}
+<h4>{{ trans('Blessing\\OAuth\\OIDC::general.link_title') }}</h4>
+
+{% if errors.has('oidc') %}
+  <div class="alert alert-danger" role="alert">{{ errors.first('oidc') }}</div>
+{% endif %}
+
+{% if email %}
+  <p>{{ trans('Blessing\\OAuth\\OIDC::general.provider_email') }}: {{ email }}</p>
+{% endif %}
+{% if nickname %}
+  <p>{{ trans('Blessing\\OAuth\\OIDC::general.nickname_from_provider', {'provider': oidc_name}) }}: {{ nickname }}</p>
+{% endif %}
+
+{% if not providerEmailVerified %}
+  <p class="text-muted">{{ trans('Blessing\\OAuth\\OIDC::general.verified_provider_email_required') }}</p>
+{% endif %}
+
+{% if canAutoLink %}
+  <p>{{ trans('Blessing\\OAuth\\OIDC::general.auto_link_description') }}</p>
+  <form action="{{ route('oidc.link.auto-link') }}" method="POST" class="mb-3">
+    {{ csrf_field()|raw }}
+    <input type="hidden" name="flow_id" value="{{ flowId }}">
+    <button type="submit" class="btn btn-primary btn-block">
+      {{ trans('Blessing\\OAuth\\OIDC::general.auto_link_button') }}
+    </button>
+  </form>
+{% endif %}
+
+{% if canCreate %}
+  <form action="{{ route('oidc.link.create') }}" method="POST" class="mb-3">
+    {{ csrf_field()|raw }}
+    <input type="hidden" name="flow_id" value="{{ flowId }}">
+    <button type="submit" class="btn btn-success btn-block">
+      {{ trans('Blessing\\OAuth\\OIDC::general.create_account') }}
+    </button>
+  </form>
+{% endif %}
+
+{% if hasExistingBinding %}
+  <p>{{ trans('Blessing\\OAuth\\OIDC::general.existing_binding_description') }}</p>
+{% endif %}
+
+<a href="{{ login_url }}" class="btn btn-outline-primary btn-block">
+  {% if canAutoLink %}
+    {{ trans('Blessing\\OAuth\\OIDC::general.use_other_account') }}
+  {% else %}
+    {{ trans('Blessing\\OAuth\\OIDC::general.login_to_link') }}
+  {% endif %}
+</a>
+{% endblock %}
